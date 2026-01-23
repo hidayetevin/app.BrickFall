@@ -69,7 +69,7 @@ export const LEVELS: Record<number, LevelConfig> = {
         worldId: 1,
         name: "First Steps",
         bricks: createGrid(3, 8, BrickType.STANDARD),
-        ballSpeed: 160,
+        ballSpeed: 16,
         paddleWidth: 100,
         powerUpChance: 0.15,
         background: 'bg_world1'
@@ -89,7 +89,7 @@ export const LEVELS: Record<number, LevelConfig> = {
             { row: 2, col: 3, type: BrickType.STANDARD, health: 1, points: 10 },
             { row: 2, col: 4, type: BrickType.STANDARD, health: 1, points: 10 },
         ],
-        ballSpeed: 170,
+        ballSpeed: 17,
         paddleWidth: 100,
         powerUpChance: 0.15,
         background: 'bg_world1'
@@ -107,7 +107,7 @@ export const LEVELS: Record<number, LevelConfig> = {
             }
             return b;
         })(),
-        ballSpeed: 180,
+        ballSpeed: 18,
         paddleWidth: 100,
         powerUpChance: 0.15,
         background: 'bg_world1'
@@ -117,7 +117,7 @@ export const LEVELS: Record<number, LevelConfig> = {
         worldId: 1,
         name: "Double Trouble",
         bricks: createGrid(4, 8, BrickType.STANDARD),
-        ballSpeed: 190,
+        ballSpeed: 19,
         paddleWidth: 90,
         powerUpChance: 0.15,
         background: 'bg_world1'
@@ -127,7 +127,7 @@ export const LEVELS: Record<number, LevelConfig> = {
         worldId: 1,
         name: "Wall of Fate",
         bricks: createGrid(5, 8, BrickType.STANDARD),
-        ballSpeed: 200,
+        ballSpeed: 20,
         paddleWidth: 90,
         powerUpChance: 0.15,
         background: 'bg_world1'
@@ -142,7 +142,7 @@ export const LEVELS: Record<number, LevelConfig> = {
             ...createGrid(2, 8, BrickType.STRONG, 2),
             ...createGrid(2, 8, BrickType.STANDARD, 1)
         ],
-        ballSpeed: 220,
+        ballSpeed: 22,
         paddleWidth: 90,
         powerUpChance: 0.12,
         background: 'bg_world2'
@@ -161,7 +161,7 @@ export const LEVELS: Record<number, LevelConfig> = {
             }
             return b;
         })(),
-        ballSpeed: 230,
+        ballSpeed: 24,
         paddleWidth: 85,
         powerUpChance: 0.12,
         background: 'bg_world2'
@@ -171,7 +171,7 @@ export const LEVELS: Record<number, LevelConfig> = {
         worldId: 2,
         name: "Core Breach",
         bricks: createGrid(6, 8, BrickType.STRONG, 2),
-        ballSpeed: 240,
+        ballSpeed: 26,
         paddleWidth: 85,
         powerUpChance: 0.12,
         background: 'bg_world2'
@@ -185,7 +185,7 @@ export const LEVELS: Record<number, LevelConfig> = {
             ...createGrid(3, 8, BrickType.STRONG, 2),
             ...createGrid(2, 8, BrickType.STANDARD, 1)
         ],
-        ballSpeed: 250,
+        ballSpeed: 28,
         paddleWidth: 80,
         powerUpChance: 0.12,
         background: 'bg_world2'
@@ -195,7 +195,7 @@ export const LEVELS: Record<number, LevelConfig> = {
         worldId: 2,
         name: "The Gatekeeper",
         bricks: createGrid(7, 8, BrickType.STRONG, 2),
-        ballSpeed: 260,
+        ballSpeed: 30,
         paddleWidth: 80,
         powerUpChance: 0.12,
         background: 'bg_world2'
@@ -211,7 +211,7 @@ export const LEVELS: Record<number, LevelConfig> = {
             ...createGrid(2, 8, BrickType.STRONG, 2),
             ...createGrid(2, 8, BrickType.STANDARD, 1)
         ],
-        ballSpeed: 280,
+        ballSpeed: 32,
         paddleWidth: 80,
         powerUpChance: 0.10,
         background: 'bg_world3'
@@ -225,7 +225,7 @@ export const LEVELS: Record<number, LevelConfig> = {
             ...createGrid(2, 8, BrickType.STRONG, 2),
             ...createGrid(2, 8, BrickType.STANDARD, 1)
         ],
-        ballSpeed: 290,
+        ballSpeed: 34,
         paddleWidth: 75,
         powerUpChance: 0.10,
         background: 'bg_world3'
@@ -235,7 +235,7 @@ export const LEVELS: Record<number, LevelConfig> = {
         worldId: 3,
         name: "Iron Curtain",
         bricks: createGrid(5, 8, BrickType.METAL, 3),
-        ballSpeed: 300,
+        ballSpeed: 36,
         paddleWidth: 70,
         powerUpChance: 0.10,
         background: 'bg_world3'
@@ -248,7 +248,7 @@ export const LEVELS: Record<number, LevelConfig> = {
             ...createGrid(2, 8, BrickType.MOVING, 1),
             ...createGrid(3, 8, BrickType.METAL, 3)
         ],
-        ballSpeed: 320,
+        ballSpeed: 38,
         paddleWidth: 70,
         powerUpChance: 0.10,
         background: 'bg_world3'
@@ -258,7 +258,7 @@ export const LEVELS: Record<number, LevelConfig> = {
         worldId: 3,
         name: "The Gauntlet",
         bricks: createGrid(6, 8, BrickType.METAL, 3),
-        ballSpeed: 340,
+        ballSpeed: 40,
         paddleWidth: 65,
         powerUpChance: 0.10,
         background: 'bg_world3'
@@ -270,7 +270,7 @@ export const LEVELS: Record<number, LevelConfig> = {
         worldId: 4,
         name: "Dark Matter",
         bricks: createGrid(5, 8, BrickType.METAL, 3),
-        ballSpeed: 380,
+        ballSpeed: 42,
         paddleWidth: 65,
         powerUpChance: 0.08,
         background: 'bg_world4'
@@ -283,7 +283,7 @@ export const LEVELS: Record<number, LevelConfig> = {
             ...createGrid(2, 8, BrickType.MOVING, 1),
             ...createGrid(4, 8, BrickType.METAL, 3)
         ],
-        ballSpeed: 420,
+        ballSpeed: 44,
         paddleWidth: 60,
         powerUpChance: 0.08,
         background: 'bg_world4'
@@ -293,7 +293,7 @@ export const LEVELS: Record<number, LevelConfig> = {
         worldId: 4,
         name: "Unbreakable",
         bricks: createGrid(7, 8, BrickType.METAL, 3),
-        ballSpeed: 450,
+        ballSpeed: 46,
         paddleWidth: 60,
         powerUpChance: 0.08,
         background: 'bg_world4'
@@ -306,7 +306,7 @@ export const LEVELS: Record<number, LevelConfig> = {
             ...createGrid(4, 8, BrickType.MOVING, 1),
             ...createGrid(4, 8, BrickType.METAL, 3)
         ],
-        ballSpeed: 480,
+        ballSpeed: 48,
         paddleWidth: 55,
         powerUpChance: 0.08,
         background: 'bg_world4'
@@ -316,7 +316,7 @@ export const LEVELS: Record<number, LevelConfig> = {
         worldId: 4,
         name: "The Final Stand",
         bricks: createGrid(8, 8, BrickType.METAL, 3),
-        ballSpeed: 500,
+        ballSpeed: 52,
         paddleWidth: 50,
         powerUpChance: 0.05,
         background: 'bg_world4'

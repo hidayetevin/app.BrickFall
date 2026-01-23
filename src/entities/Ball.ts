@@ -83,20 +83,10 @@ export class Ball extends Phaser.Physics.Matter.Sprite {
     }
 
     /**
-     * Set ball speed
+     * Set target ball speed (scaling happens in update)
      */
     public setSpeed(speed: number): void {
-        const clampedSpeed = Phaser.Math.Clamp(speed, BALL_MIN_SPEED, BALL_MAX_SPEED);
-        this.currentSpeed = clampedSpeed;
-
-        if (this.isLaunched && this.body) {
-            const velocity = (this.body as any).velocity;
-            const angle = Math.atan2(velocity.y, velocity.x);
-            this.setVelocity(
-                Math.cos(angle) * clampedSpeed,
-                Math.sin(angle) * clampedSpeed
-            );
-        }
+        this.currentSpeed = Phaser.Math.Clamp(speed, BALL_MIN_SPEED, BALL_MAX_SPEED);
     }
 
     /**
@@ -119,24 +109,28 @@ export class Ball extends Phaser.Physics.Matter.Sprite {
     }
 
     /**
-     * Handle bounce off paddle
+     * Handle physical bounce off a surface using normal reflection
      */
-    public bounceOffPaddle(paddleX: number, paddleWidth: number, paddleVelocity: number): void {
-        if (!this.isLaunched) return;
+    public bounce(normal: { x: number, y: number }): void {
+        if (!this.isLaunched || !this.body) return;
 
-        // Calculate hit position on paddle (-1 to 1)
-        const relativeHitX = (this.x - paddleX) / (paddleWidth / 2 || 1);
-        const maxBounceAngle = 60;
-        const bounceAngle = Phaser.Math.Clamp(relativeHitX * maxBounceAngle, -75, 75);
-        const radians = Phaser.Math.DegToRad(bounceAngle - 90);
+        const velocity = (this.body as any).velocity;
 
-        const speedBoost = Math.abs(paddleVelocity) * 0.1;
-        const totalSpeed = Math.min(this.currentSpeed + speedBoost, BALL_MAX_SPEED);
+        // Reflection formula: v' = v - 2(v . n)n
+        const dot = velocity.x * normal.x + velocity.y * normal.y;
 
-        this.setVelocity(
-            Math.cos(radians) * totalSpeed,
-            Math.sin(radians) * totalSpeed
-        );
+        // Only reflect if we are moving towards the surface
+        if (dot < 0) {
+            const newVx = velocity.x - 2 * dot * normal.x;
+            const newVy = velocity.y - 2 * dot * normal.y;
+
+            this.setVelocity(newVx, newVy);
+
+            // If hitting paddle (normal mostly up), ensure it's moving up
+            if (normal.y < -0.5) {
+                this.setVelocityY(-Math.abs((this.body as any).velocity.y));
+            }
+        }
     }
 
     /**
@@ -202,21 +196,25 @@ export class Ball extends Phaser.Physics.Matter.Sprite {
 
         // Final safety check for NaN
         if (isNaN(velocity.x) || isNaN(velocity.y) || isNaN(this.x) || isNaN(this.y)) {
-            console.warn('⚠️ Physics NaN detected, resetting ball velocity');
-            this.setVelocity(0, -this.currentSpeed);
+            console.warn('⚠️ Physics NaN detected, correcting ball state...');
+
+            // Try to recover position
             if (isNaN(this.x) || isNaN(this.y)) {
                 this.setPosition(this.scene.scale.width / 2, this.scene.scale.height / 2);
             }
+
+            // Reset velocity to a safe downward direction to return to play
+            this.setVelocity(0, this.currentSpeed);
             return;
         }
 
         // Maintain constant speed
         const currentSpeedSq = velocity.x ** 2 + velocity.y ** 2;
-        if (currentSpeedSq < 100) { // If speed is too low (less than 10px/s)
-            this.setVelocity(0, -this.currentSpeed);
+        if (currentSpeedSq < 1) { // If speed is dangerously low (near stop)
+            this.launch(); // Use default launch to get it moving again
         } else {
             const currentSpeed = Math.sqrt(currentSpeedSq);
-            if (Math.abs(currentSpeed - this.currentSpeed) > 0.5) {
+            if (Math.abs(currentSpeed - this.currentSpeed) > 1) { // Increased threshold slightly
                 const ratio = this.currentSpeed / currentSpeed;
                 if (isFinite(ratio)) {
                     this.setVelocity(velocity.x * ratio, velocity.y * ratio);

@@ -117,6 +117,11 @@ export abstract class Brick extends Phaser.GameObjects.Rectangle {
 
         this.isDestroyed = true;
 
+        // Remove physics body immediately to prevent double hits
+        if (this.body) {
+            this.scene.matter.world.remove(this.body);
+        }
+
         // Emit destroy event
         this.scene.events.emit('brickDestroyed', {
             brick: this,

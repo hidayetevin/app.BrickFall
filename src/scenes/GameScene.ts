@@ -7,6 +7,7 @@ import { LevelManager } from '@systems/LevelManager';
 import { ProgressionManager } from '@systems/ProgressionManager';
 import { LevelConfig, LevelStats } from '../types/LevelTypes';
 import { GameState } from '../types/GameTypes';
+import { Brick } from '@entities/Brick';
 import { COLORS, INITIAL_LIVES, PADDLE_Y_OFFSET } from '@config/Constants';
 
 /**
@@ -73,6 +74,9 @@ export class GameScene extends Phaser.Scene {
         // Setup Event Listeners
         this.setupEvents();
 
+        // Setup Collision Detection
+        this.setupCollisions();
+
         this.gameState = 'IDLE';
     }
 
@@ -138,6 +142,50 @@ export class GameScene extends Phaser.Scene {
             this.lives++;
             this.updateUI();
         });
+    }
+
+    private setupCollisions(): void {
+        this.matter.world.on('collisionstart', (event: Phaser.Physics.Matter.Events.CollisionStartEvent) => {
+            event.pairs.forEach((pair) => {
+                const { bodyA, bodyB } = pair;
+
+                const ball = this.balls.find(b => b.body === bodyA || b.body === bodyB);
+                if (!ball) return;
+
+                const otherBody = (bodyA === ball.body) ? bodyB : bodyA;
+                const otherObject = (otherBody as any).gameObject;
+
+                if (!otherObject) return;
+
+                if (otherObject instanceof Brick) {
+                    this.handleBrickHit(ball, otherObject, pair);
+                } else if (otherObject instanceof Paddle) {
+                    this.handlePaddleHit(ball, otherObject, pair);
+                }
+            });
+        });
+    }
+
+    private handleBrickHit(ball: Ball, brick: Brick, pair: any): void {
+        if (brick.isDestroyed) return;
+
+        // Apply physical bounce
+        ball.bounce(pair.collision.normal);
+
+        // Delay destruction so physics can resolve first
+        this.time.delayedCall(0, () => {
+            if (brick && !brick.isDestroyed) {
+                brick.hit();
+            }
+        });
+
+        // Update target speed
+        ball.setSpeed(ball.currentSpeed + 0.5);
+    }
+
+    private handlePaddleHit(ball: Ball, _paddle: Paddle, pair: any): void {
+        // Apply physical bounce
+        ball.bounce(pair.collision.normal);
     }
 
     private handleScore(points: number): void {
