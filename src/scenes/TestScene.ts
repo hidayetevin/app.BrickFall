@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { Paddle } from '@entities/Paddle';
 import { Ball } from '@entities/Ball';
+import { Brick } from '@entities/Brick';
 import { BrickManager } from '@systems/BrickManager';
 import { PowerUpManager } from '@systems/PowerUpManager';
 import { PADDLE_Y_OFFSET, COLORS, INITIAL_LIVES } from '@config/Constants';
@@ -137,27 +138,22 @@ export class TestScene extends Phaser.Scene {
                 event.pairs.forEach((pair) => {
                     const { bodyA, bodyB } = pair;
 
-                    // Ball vs Paddle - Check all balls
-                    this.balls.forEach(ball => {
-                        if (
-                            (bodyA === this.paddle.body && bodyB === ball.body) ||
-                            (bodyA === ball.body && bodyB === this.paddle.body)
-                        ) {
-                            this.onPaddleHit(ball);
-                        }
-                    });
+                    // Identify ball
+                    const ball = this.balls.find(b => b.body === bodyA || b.body === bodyB);
+                    if (!ball) return;
 
-                    // Ball vs Brick - Check all balls
-                    this.balls.forEach(ball => {
-                        this.brickManager['bricks'].forEach((brick) => {
-                            if (
-                                (bodyA === brick.body && bodyB === ball.body) ||
-                                (bodyA === ball.body && bodyB === brick.body)
-                            ) {
-                                this.onBrickHit(brick);
-                            }
-                        });
-                    });
+                    // Identify other object
+                    const otherBody = (bodyA === ball.body) ? bodyB : bodyA;
+                    const otherObject = (otherBody as any).gameObject;
+
+                    if (!otherObject) return;
+
+                    // Handle collisions
+                    if (otherObject instanceof Paddle) {
+                        this.onPaddleHit(ball, pair);
+                    } else if (otherObject instanceof Brick) {
+                        this.onBrickHit(ball, otherObject, pair);
+                    }
                 });
             }
         );
@@ -166,11 +162,10 @@ export class TestScene extends Phaser.Scene {
     /**
      * Handle ball hitting paddle
      */
-    private onPaddleHit(ball: Ball): void {
+    private onPaddleHit(ball: Ball, pair: any): void {
         if (!ball.isLaunched) return;
 
-        const paddleVelocity = this.paddle.getVelocity();
-        ball.bounceOffPaddle(this.paddle.x, this.paddle.currentWidth, paddleVelocity);
+        ball.bounce(pair.collision.normal);
 
         // Visual feedback
         this.paddle.setFillStyle(COLORS.SUCCESS);
@@ -182,8 +177,9 @@ export class TestScene extends Phaser.Scene {
     /**
      * Handle ball hitting brick
      */
-    private onBrickHit(brick: any): void {
+    private onBrickHit(ball: Ball, brick: Brick, pair: any): void {
         if (brick.isDestroyed) return;
+        ball.bounce(pair.collision.normal);
         brick.hit(1);
     }
 

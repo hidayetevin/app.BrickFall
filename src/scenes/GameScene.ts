@@ -8,7 +8,7 @@ import { ProgressionManager } from '@systems/ProgressionManager';
 import { LevelConfig, LevelStats } from '../types/LevelTypes';
 import { GameState } from '../types/GameTypes';
 import { Brick } from '@entities/Brick';
-import { COLORS, INITIAL_LIVES, PADDLE_Y_OFFSET } from '@config/Constants';
+import { COLORS, INITIAL_LIVES, PADDLE_Y_OFFSET, BALL_SPEED_INCREMENT } from '@config/Constants';
 
 /**
  * GameScene - Main gameplay scene
@@ -180,7 +180,7 @@ export class GameScene extends Phaser.Scene {
         });
 
         // Update target speed
-        ball.setSpeed(ball.currentSpeed + 0.5);
+        ball.setSpeed(ball.currentSpeed + BALL_SPEED_INCREMENT);
     }
 
     private handlePaddleHit(ball: Ball, _paddle: Paddle, pair: any): void {

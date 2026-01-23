@@ -126,8 +126,8 @@ export class PowerUpManager {
      * Multi-ball: Spawn 2 extra balls
      */
     private activateMultiBall(): void {
-        const mainBall = this.balls[0];
-        if (!mainBall || !mainBall.isLaunched) return;
+        const mainBall = this.balls.find(b => b.active && b.body && b.isLaunched);
+        if (!mainBall) return;
 
         // Spawn 2 extra balls with different angles
         for (let i = 0; i < 2; i++) {

@@ -14,10 +14,10 @@ export const PADDLE_Y_OFFSET = 50; // Distance from bottom
 
 // Ball configuration
 export const BALL_RADIUS = 8;
-export const BALL_BASE_SPEED = 16;
+export const BALL_BASE_SPEED = 10;
 export const BALL_MAX_SPEED = 48;
-export const BALL_MIN_SPEED = 12;
-export const BALL_SPEED_INCREMENT = 0.2; // Speed increase per brick hit
+export const BALL_MIN_SPEED = 10;
+export const BALL_SPEED_INCREMENT = 0.1; // Speed increase per brick hit
 
 // Brick configuration
 export const BRICK_WIDTH = 40;
