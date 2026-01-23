@@ -159,21 +159,29 @@ export class Ball extends Phaser.Physics.Matter.Sprite {
      * Update ball trail
      */
     private updateTrail(): void {
-        if (!this.trail || !this.active) return;
+        if (!this.trail || !this.active || !this.scene) return;
+
+        // Extra safety: check if trail still exists in scene
+        if (!this.trail.scene) return;
 
         this.trailPoints.push({ x: this.x, y: this.y });
         if (this.trailPoints.length > 10) this.trailPoints.shift();
 
-        this.trail.clear();
-        for (let i = 1; i < this.trailPoints.length; i++) {
-            const alpha = (i / this.trailPoints.length) * 0.2;
-            this.trail.lineStyle(2, COLORS.BALL, alpha);
-            this.trail.lineBetween(
-                this.trailPoints[i - 1].x,
-                this.trailPoints[i - 1].y,
-                this.trailPoints[i].x,
-                this.trailPoints[i].y
-            );
+        try {
+            this.trail.clear();
+            for (let i = 1; i < this.trailPoints.length; i++) {
+                const alpha = (i / this.trailPoints.length) * 0.2;
+                this.trail.lineStyle(2, COLORS.BALL, alpha);
+                this.trail.lineBetween(
+                    this.trailPoints[i - 1].x,
+                    this.trailPoints[i - 1].y,
+                    this.trailPoints[i].x,
+                    this.trailPoints[i].y
+                );
+            }
+        } catch (e) {
+            // Trail graphics may have been destroyed, silence the error
+            this.trail = undefined;
         }
     }
 
@@ -190,7 +198,7 @@ export class Ball extends Phaser.Physics.Matter.Sprite {
      * Update ball physics and appearance
      */
     public update(): void {
-        if (!this.active || !this.isLaunched || !this.body) return;
+        if (!this.active || !this.isLaunched || !this.body || !this.scene) return;
 
         const velocity = (this.body as any).velocity;
 

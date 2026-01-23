@@ -36,6 +36,11 @@ export class PowerUpManager {
      * Spawn a power-up at a specific location
      */
     public spawnPowerUp(x: number, y: number): void {
+        // Don't spawn if scene is shutting down
+        if (!this.scene || !this.scene.sys || !this.scene.sys.isActive()) {
+            return;
+        }
+
         // Random chance to spawn
         if (Math.random() > POWER_UP_DROP_CHANCE) {
             return;

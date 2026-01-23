@@ -130,6 +130,9 @@ export class GameScene extends Phaser.Scene {
 
     private setupEvents(): void {
         this.events.on('brickDestroyed', (data: any) => {
+            // Don't process brick events if game is ending
+            if (this.gameState !== 'PLAYING') return;
+
             this.handleScore(data.points);
             this.powerUpManager.spawnPowerUp(data.x, data.y);
 
@@ -189,6 +192,9 @@ export class GameScene extends Phaser.Scene {
     }
 
     private handleScore(points: number): void {
+        // Don't process score if game is ending
+        if (this.gameState !== 'PLAYING') return;
+
         const now = this.time.now;
         if (now - this.lastHitTime < 2000) {
             this.combo++;
@@ -203,8 +209,16 @@ export class GameScene extends Phaser.Scene {
     }
 
     private updateUI(): void {
-        this.scoreText.setText(`SCORE: ${this.score}`);
-        this.livesText.setText(`LIVES: ${this.lives}`);
+        // Only update if scene is still active and text objects exist
+        if (!this.scene || !this.scoreText || !this.livesText) return;
+        if (!this.scoreText.scene || !this.livesText.scene) return;
+
+        try {
+            this.scoreText.setText(`SCORE: ${this.score}`);
+            this.livesText.setText(`LIVES: ${this.lives}`);
+        } catch (e) {
+            // Scene may be transitioning, ignore render errors
+        }
     }
 
     update(): void {
@@ -236,6 +250,9 @@ export class GameScene extends Phaser.Scene {
     }
 
     private handleBallLoss(): void {
+        // Prevent multiple calls in the same frame
+        if (this.gameState !== 'PLAYING') return;
+
         this.lives--;
         this.updateUI();
 
@@ -271,7 +288,12 @@ export class GameScene extends Phaser.Scene {
     }
 
     private handleGameOver(): void {
+        // Prevent any further events from being processed
         this.gameState = 'GAME_OVER';
-        this.scene.start('GameOver', { levelId: this.levelConfig.id, score: this.score });
+
+        // Small delay before transition to allow cleanup
+        this.time.delayedCall(100, () => {
+            this.scene.start('GameOver', { levelId: this.levelConfig.id, score: this.score });
+        });
     }
 }

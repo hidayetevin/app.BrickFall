@@ -119,23 +119,29 @@ export class Paddle extends Phaser.GameObjects.Rectangle {
      */
     public extend(multiplier: number = 1.3): void {
         const newWidth = this.defaultWidth * multiplier;
-        this.setSize(newWidth, PADDLE_HEIGHT);
+
+        // Shape size
+        this.width = newWidth;
         this.currentWidth = newWidth;
 
         // Update physics body
-        this.scene.matter.body.scale(this.body, multiplier, 1);
+        if (this.body) {
+            this.scene.matter.body.scale(this.body, multiplier, 1);
+        }
     }
 
     /**
      * Shrink paddle to default width
      */
     public shrink(): void {
-        this.setSize(this.defaultWidth, PADDLE_HEIGHT);
+        this.width = this.defaultWidth;
         this.currentWidth = this.defaultWidth;
 
-        // Reset physics body (re-create it)
-        this.scene.matter.world.remove(this.body);
-        this.setupPhysics();
+        // Reset physics body
+        if (this.body) {
+            this.scene.matter.world.remove(this.body);
+            this.setupPhysics();
+        }
     }
 
     /**

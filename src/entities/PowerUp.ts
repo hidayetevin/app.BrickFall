@@ -95,6 +95,12 @@ export class PowerUp extends Phaser.GameObjects.Container {
      * Start falling animation
      */
     private startFalling(): void {
+        // Safety check: ensure scene and camera are valid
+        if (!this.scene || !this.scene.cameras || !this.scene.cameras.main) {
+            this.destroy();
+            return;
+        }
+
         this.scene.tweens.add({
             targets: this,
             y: this.scene.cameras.main.height + 50,
