@@ -33,8 +33,23 @@ export class LevelCompleteScene extends Phaser.Scene {
             color: '#ffffff'
         }).setOrigin(0.5);
 
-        // Stars
+        // Stars container background
         const starsY = height * 0.45;
+        const panelWidth = 280;
+        const panelHeight = 130;
+
+        // Background panel for stars
+        const starsPanel = this.add.graphics();
+        starsPanel.fillStyle(0x1a1a2e, 0.6);
+        starsPanel.fillRoundedRect(
+            width / 2 - panelWidth / 2,
+            starsY - panelHeight / 2,
+            panelWidth,
+            panelHeight,
+            20
+        );
+
+        // Stars
         for (let i = 0; i < 3; i++) {
             const x = width / 2 + (i - 1) * 60;
             const isEarned = i < data.stars;
