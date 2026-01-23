@@ -7,7 +7,7 @@ import { PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_SPEED, GAME_WIDTH, COLORS } from '@
  */
 export class Paddle extends Phaser.GameObjects.Rectangle {
     public scene: Phaser.Scene;
-    public body!: MatterJS.BodyType;
+    public declare body: MatterJS.BodyType;
 
     public defaultWidth: number;
     public currentWidth: number;
@@ -60,17 +60,24 @@ export class Paddle extends Phaser.GameObjects.Rectangle {
     private setupInput(): void {
         // Mouse/Touch move
         this.scene.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
-            this.targetX = pointer.x;
+            // Use worldX to handle scaled games correctly
+            this.targetX = pointer.worldX;
+        });
+
+        // Handle touch cases where pointermove might not trigger without contact
+        this.scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+            this.targetX = pointer.worldX;
         });
 
         // Keyboard controls
         const cursors = this.scene.input.keyboard?.createCursorKeys();
         if (cursors) {
             this.scene.events.on('update', () => {
+                const moveAmount = this.moveSpeed * 0.016;
                 if (cursors.left.isDown) {
-                    this.moveLeft();
+                    this.targetX = Math.max(this.currentWidth / 2, this.targetX - moveAmount);
                 } else if (cursors.right.isDown) {
-                    this.moveRight();
+                    this.targetX = Math.min(GAME_WIDTH - this.currentWidth / 2, this.targetX + moveAmount);
                 }
             });
         }
@@ -165,16 +172,19 @@ export class Paddle extends Phaser.GameObjects.Rectangle {
         const moveAmount = Math.abs(dx) > 1 ? dx * 0.15 : dx;
 
         const newX = this.x + moveAmount;
+        const gameWidth = this.scene.scale?.width || GAME_WIDTH;
         const clampedX = Phaser.Math.Clamp(
             newX,
             this.currentWidth / 2,
-            GAME_WIDTH - this.currentWidth / 2
+            gameWidth - this.currentWidth / 2
         );
 
         this.setX(clampedX);
 
         // Update Matter.js body position
-        this.scene.matter.body.setPosition(this.body, { x: clampedX, y: this.y });
+        if (this.body) {
+            this.scene.matter.body.setPosition(this.body as any, { x: clampedX, y: this.y });
+        }
 
         // Update attached balls positions
         this.attachedBalls.forEach((ball, index) => {

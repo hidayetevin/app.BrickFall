@@ -57,25 +57,20 @@ export class BootScene extends Phaser.Scene {
         // Show temporary message
         const { width, height } = this.cameras.main;
 
-        this.add.text(width / 2, height / 2 - 50, '🎮 Brick Breaker', {
+        this.add.text(width / 2, height / 2 - 50, '🎮 BRICK FALL', {
             fontSize: '32px',
             color: '#ffffff',
             fontStyle: 'bold',
         }).setOrigin(0.5);
 
-        this.add.text(width / 2, height / 2 + 20, 'Phase 2: Core Mechanics', {
+        this.add.text(width / 2, height / 2 + 20, 'Ready to break!', {
             fontSize: '20px',
             color: '#00ff88',
         }).setOrigin(0.5);
 
-        this.add.text(width / 2, height / 2 + 60, 'Loading test scene...', {
-            fontSize: '16px',
-            color: '#ffffff',
-        }).setOrigin(0.5);
-
-        // Transition to TestScene after 2 seconds
-        this.time.delayedCall(2000, () => {
-            this.scene.start('Test');
+        // Transition to MenuScene after 1 second
+        this.time.delayedCall(1000, () => {
+            this.scene.start('Menu');
         });
     }
 }

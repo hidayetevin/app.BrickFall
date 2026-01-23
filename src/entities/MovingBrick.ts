@@ -35,7 +35,6 @@ export class MovingBrick extends Brick {
      */
     private startMoving(): void {
         const startX = this.x;
-        const leftBound = startX - this.moveRange / 2;
         const rightBound = startX + this.moveRange / 2;
 
         this.moveTween = this.scene.tweens.add({

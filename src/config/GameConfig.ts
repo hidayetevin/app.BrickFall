@@ -1,16 +1,14 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from './Constants';
 
-// Import scenes (will be created in next phase)
+// Import scenes
 import { BootScene } from '@scenes/BootScene';
+import { MenuScene } from '@scenes/MenuScene';
+import { WorldMapScene } from '@scenes/WorldMapScene';
+import { GameScene } from '@scenes/GameScene';
+import { LevelCompleteScene } from '@scenes/LevelCompleteScene';
+import { GameOverScene } from '@scenes/GameOverScene';
 import { TestScene } from '@scenes/TestScene';
-// import { MenuScene } from '@scenes/MenuScene';
-// import { WorldMapScene } from '@scenes/WorldMapScene';
-// import { GameScene } from '@scenes/GameScene';
-// import { PauseScene } from '@scenes/PauseScene';
-// import { LevelCompleteScene } from '@scenes/LevelCompleteScene';
-// import { GameOverScene } from '@scenes/GameOverScene';
-// import { SettingsScene } from '@scenes/SettingsScene';
 
 /**
  * Main Phaser game configuration
@@ -30,23 +28,20 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     physics: {
         default: 'matter',
         matter: {
-            gravity: { x: 0, y: 0 }, // No gravity for brick breaker
-            debug: false, // Set to true for development
+            gravity: { x: 0, y: 0 },
+            debug: false,
             enableSleeping: false,
         },
     },
 
     scene: [
         BootScene,
-        TestScene,
-        // Scenes will be added as they are created
-        // MenuScene,
-        // WorldMapScene,
-        // GameScene,
-        // PauseScene,
-        // LevelCompleteScene,
-        // GameOverScene,
-        // SettingsScene,
+        MenuScene,
+        WorldMapScene,
+        GameScene,
+        LevelCompleteScene,
+        GameOverScene,
+        TestScene // Keep Test for now just in case
     ],
 
     render: {

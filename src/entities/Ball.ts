@@ -1,13 +1,5 @@
 import Phaser from 'phaser';
-import {
-    BALL_RADIUS,
-    BALL_BASE_SPEED,
-    BALL_MAX_SPEED,
-    BALL_MIN_SPEED,
-    COLORS,
-    GAME_WIDTH,
-    GAME_HEIGHT,
-} from '@config/Constants';
+import { BALL_RADIUS, BALL_BASE_SPEED, BALL_MIN_SPEED, BALL_MAX_SPEED, COLORS } from '@config/Constants';
 
 /**
  * Ball - The main game ball with Matter.js physics
@@ -28,8 +20,8 @@ export class Ball extends Phaser.Physics.Matter.Sprite {
 
         // Create a circle texture if it doesn't exist
         if (!scene.textures.exists('ball')) {
-            const graphics = scene.make.graphics({ x: 0, y: 0, add: false });
-            graphics.fillStyle(COLORS.BALL, 1);
+            const graphics = scene.make.graphics({ x: 0, y: 0 });
+            graphics.fillStyle(0xffffff, 1);
             graphics.fillCircle(ballRadius, ballRadius, ballRadius);
             graphics.generateTexture('ball', ballRadius * 2, ballRadius * 2);
             graphics.destroy();
@@ -55,18 +47,11 @@ export class Ball extends Phaser.Physics.Matter.Sprite {
      * Setup Matter.js physics
      */
     private setupPhysics(): void {
-        // Create circular body
         this.setCircle(this.radius);
-
-        // Physics properties for perfect bouncing
         this.setBounce(1);
         this.setFriction(0, 0, 0);
         this.setMass(1);
-
-        // Prevent rotation
         this.setFixedRotation();
-
-        // Set collision category
         this.setCollisionCategory(1);
     }
 
@@ -84,7 +69,6 @@ export class Ball extends Phaser.Physics.Matter.Sprite {
     public launch(angle?: number): void {
         if (this.isLaunched) return;
 
-        // Random angle between -60 and -120 degrees (upward)
         const launchAngle = angle || Phaser.Math.Between(-120, -60);
         const radians = Phaser.Math.DegToRad(launchAngle);
 
@@ -105,29 +89,14 @@ export class Ball extends Phaser.Physics.Matter.Sprite {
         const clampedSpeed = Phaser.Math.Clamp(speed, BALL_MIN_SPEED, BALL_MAX_SPEED);
         this.currentSpeed = clampedSpeed;
 
-        // Apply speed to current velocity direction
-        if (this.isLaunched) {
-            const velocity = this.body.velocity;
+        if (this.isLaunched && this.body) {
+            const velocity = (this.body as any).velocity;
             const angle = Math.atan2(velocity.y, velocity.x);
             this.setVelocity(
                 Math.cos(angle) * clampedSpeed,
                 Math.sin(angle) * clampedSpeed
             );
         }
-    }
-
-    /**
-     * Increase ball speed
-     */
-    public increaseSpeed(amount: number): void {
-        this.setSpeed(this.currentSpeed + amount);
-    }
-
-    /**
-     * Decrease ball speed
-     */
-    public decreaseSpeed(amount: number): void {
-        this.setSpeed(this.currentSpeed - amount);
     }
 
     /**
@@ -153,15 +122,14 @@ export class Ball extends Phaser.Physics.Matter.Sprite {
      * Handle bounce off paddle
      */
     public bounceOffPaddle(paddleX: number, paddleWidth: number, paddleVelocity: number): void {
-        // Calculate hit position on paddle (-1 to 1, left to right)
-        const relativeHitX = (this.x - paddleX) / (paddleWidth / 2);
+        if (!this.isLaunched) return;
 
-        // Adjust bounce angle based on hit position
-        const maxBounceAngle = 60; // degrees
-        const bounceAngle = relativeHitX * maxBounceAngle;
-        const radians = Phaser.Math.DegToRad(bounceAngle - 90); // -90 to make it upward
+        // Calculate hit position on paddle (-1 to 1)
+        const relativeHitX = (this.x - paddleX) / (paddleWidth / 2 || 1);
+        const maxBounceAngle = 60;
+        const bounceAngle = Phaser.Math.Clamp(relativeHitX * maxBounceAngle, -75, 75);
+        const radians = Phaser.Math.DegToRad(bounceAngle - 90);
 
-        // Add paddle velocity to ball
         const speedBoost = Math.abs(paddleVelocity) * 0.1;
         const totalSpeed = Math.min(this.currentSpeed + speedBoost, BALL_MAX_SPEED);
 
@@ -172,23 +140,23 @@ export class Ball extends Phaser.Physics.Matter.Sprite {
     }
 
     /**
-     * Prevent horizontal or too-steep angles
+     * Prevent too horizontal angles
      */
     private preventHorizontalBounce(): void {
-        const velocity = this.body.velocity;
+        if (!this.body) return;
+        const velocity = (this.body as any).velocity;
+
+        if (isNaN(velocity.x) || isNaN(velocity.y)) return;
+
         const angle = Math.atan2(velocity.y, velocity.x);
         const degrees = Phaser.Math.RadToDeg(angle);
 
-        // If ball is moving too horizontally (between -15 and 15 degrees)
-        if (Math.abs(degrees) < 15 || Math.abs(degrees - 180) < 15) {
-            // Adjust to minimum angle
+        if (Math.abs(degrees) < 10 || Math.abs(degrees - 180) < 10 || Math.abs(degrees + 180) < 10) {
             const newAngle = degrees < 0 ? -15 : 15;
             const radians = Phaser.Math.DegToRad(newAngle);
-            const speed = Math.sqrt(velocity.x ** 2 + velocity.y ** 2);
-
             this.setVelocity(
-                Math.cos(radians) * speed,
-                Math.sin(radians) * speed
+                Math.cos(radians) * this.currentSpeed,
+                Math.sin(radians) * this.currentSpeed
             );
         }
     }
@@ -197,23 +165,15 @@ export class Ball extends Phaser.Physics.Matter.Sprite {
      * Update ball trail
      */
     private updateTrail(): void {
-        if (!this.trail) return;
+        if (!this.trail || !this.active) return;
 
-        // Add current position to trail
         this.trailPoints.push({ x: this.x, y: this.y });
+        if (this.trailPoints.length > 10) this.trailPoints.shift();
 
-        // Keep trail length limited
-        if (this.trailPoints.length > 20) {
-            this.trailPoints.shift();
-        }
-
-        // Draw trail
         this.trail.clear();
-        this.trail.lineStyle(2, COLORS.BALL, 0.3);
-
         for (let i = 1; i < this.trailPoints.length; i++) {
-            const alpha = i / this.trailPoints.length;
-            this.trail.lineStyle(2, COLORS.BALL, alpha * 0.3);
+            const alpha = (i / this.trailPoints.length) * 0.2;
+            this.trail.lineStyle(2, COLORS.BALL, alpha);
             this.trail.lineBetween(
                 this.trailPoints[i - 1].x,
                 this.trailPoints[i - 1].y,
@@ -224,50 +184,62 @@ export class Ball extends Phaser.Physics.Matter.Sprite {
     }
 
     /**
-     * Check if ball is out of bounds (fell below paddle)
+     * Check if ball is out of bounds
      */
     public isOutOfBounds(): boolean {
-        return this.y > GAME_HEIGHT + this.radius * 2;
+        if (isNaN(this.y) || isNaN(this.x)) return true;
+        const limit = (this.scene.scale?.height || 667) + this.radius * 2;
+        return this.y > limit;
     }
 
     /**
      * Update ball physics and appearance
      */
     public update(): void {
-        if (!this.isLaunched) return;
+        if (!this.active || !this.isLaunched || !this.body) return;
+
+        const velocity = (this.body as any).velocity;
+
+        // Final safety check for NaN
+        if (isNaN(velocity.x) || isNaN(velocity.y) || isNaN(this.x) || isNaN(this.y)) {
+            console.warn('⚠️ Physics NaN detected, resetting ball velocity');
+            this.setVelocity(0, -this.currentSpeed);
+            if (isNaN(this.x) || isNaN(this.y)) {
+                this.setPosition(this.scene.scale.width / 2, this.scene.scale.height / 2);
+            }
+            return;
+        }
 
         // Maintain constant speed
-        const velocity = this.body.velocity;
-        const currentSpeed = Math.sqrt(velocity.x ** 2 + velocity.y ** 2);
-
-        if (Math.abs(currentSpeed - this.currentSpeed) > 10) {
-            const ratio = this.currentSpeed / currentSpeed;
-            this.setVelocity(velocity.x * ratio, velocity.y * ratio);
+        const currentSpeedSq = velocity.x ** 2 + velocity.y ** 2;
+        if (currentSpeedSq < 100) { // If speed is too low (less than 10px/s)
+            this.setVelocity(0, -this.currentSpeed);
+        } else {
+            const currentSpeed = Math.sqrt(currentSpeedSq);
+            if (Math.abs(currentSpeed - this.currentSpeed) > 0.5) {
+                const ratio = this.currentSpeed / currentSpeed;
+                if (isFinite(ratio)) {
+                    this.setVelocity(velocity.x * ratio, velocity.y * ratio);
+                }
+            }
         }
 
-        // Prevent horizontal bounces
         this.preventHorizontalBounce();
-
-        // Update trail
         this.updateTrail();
 
-        // Check bounds
-        if (this.x < this.radius || this.x > GAME_WIDTH - this.radius) {
-            this.setVelocityX(-velocity.x);
+        // Bounds bounce with position clamping
+        const gameWidth = this.scene.scale.width;
+        if (this.x < this.radius) {
+            this.setX(this.radius);
+            this.setVelocityX(Math.abs(velocity.x) || 1);
+        } else if (this.x > gameWidth - this.radius) {
+            this.setX(gameWidth - this.radius);
+            this.setVelocityX(-Math.abs(velocity.x) || -1);
         }
-        if (this.y < this.radius) {
-            this.setVelocityY(-velocity.y);
-        }
-    }
 
-    /**
-     * Destroy ball and cleanup
-     */
-    public destroy(): void {
-        if (this.trail) {
-            this.trail.destroy();
+        if (this.y < this.radius) {
+            this.setY(this.radius);
+            this.setVelocityY(Math.abs(velocity.y) || 1);
         }
-        this.trailPoints = [];
-        super.destroy();
     }
 }

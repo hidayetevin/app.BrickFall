@@ -136,11 +136,15 @@ export class PowerUpManager {
 
             // Launch at different angles
             const angleOffset = (i === 0 ? -30 : 30);
-            const currentVelocity = mainBall.body.velocity;
-            const currentAngle = Math.atan2(currentVelocity.y, currentVelocity.x);
-            const newAngle = Phaser.Math.RadToDeg(currentAngle) + angleOffset;
+            const currentVelocity = (mainBall.body as any).velocity;
 
-            newBall.launch(newAngle);
+            if (currentVelocity) {
+                const currentAngle = Math.atan2(currentVelocity.y, currentVelocity.x);
+                const newAngle = Phaser.Math.RadToDeg(currentAngle) + angleOffset;
+                newBall.launch(newAngle);
+            } else {
+                newBall.launch(); // Default launch if velocity not available
+            }
         }
 
         console.log('⚽ Multi-ball activated! Total balls:', this.balls.length);

@@ -27,9 +27,10 @@ export class BrickManager {
     /**
      * Create bricks from level data
      */
-    public createBricksFromData(brickData: BrickData[]): void {
+    public createBricksFromLevel(level: any): void {
         this.clearAll();
 
+        const brickData = level.bricks as BrickData[];
         brickData.forEach((data) => {
             const brick = this.createBrick(data);
             if (brick) {
@@ -40,7 +41,7 @@ export class BrickManager {
         this.totalBricks = this.bricks.length;
         this.destroyedBricks = 0;
 
-        console.log(`🧱 Created ${this.totalBricks} bricks`);
+        console.log(`🧱 Created ${this.totalBricks} bricks for level ${level.id}`);
     }
 
     /**
@@ -166,7 +167,10 @@ export class BrickManager {
      * Calculate brick position from row/col
      */
     private calculatePosition(row: number, col: number): { x: number; y: number } {
-        const x = col * (BRICK_WIDTH + BRICK_PADDING) + BRICK_WIDTH / 2;
+        const totalWidth = 8 * (BRICK_WIDTH + BRICK_PADDING) - BRICK_PADDING;
+        const startX = (this.scene.cameras.main.width - totalWidth) / 2;
+
+        const x = startX + col * (BRICK_WIDTH + BRICK_PADDING) + BRICK_WIDTH / 2;
         const y = BRICK_OFFSET_TOP + row * (BRICK_HEIGHT + BRICK_PADDING) + BRICK_HEIGHT / 2;
         return { x, y };
     }
@@ -224,6 +228,20 @@ export class BrickManager {
      */
     public getBricksRemaining(): number {
         return this.bricks.length;
+    }
+
+    /**
+     * Get destroyed bricks count
+     */
+    public getBricksDestroyed(): number {
+        return this.destroyedBricks;
+    }
+
+    /**
+     * Get total bricks count
+     */
+    public getTotalBricksCount(): number {
+        return this.totalBricks;
     }
 
     /**

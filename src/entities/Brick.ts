@@ -7,7 +7,7 @@ import { BrickType } from '../types/GameTypes';
  */
 export abstract class Brick extends Phaser.GameObjects.Rectangle {
     public scene: Phaser.Scene;
-    public body!: MatterJS.BodyType;
+    public declare body: MatterJS.BodyType;
 
     public type: BrickType;
     public health: number;

@@ -19,8 +19,8 @@ export class TestScene extends Phaser.Scene {
     private livesText!: Phaser.GameObjects.Text;
     private powerUpsText!: Phaser.GameObjects.Text;
 
-    private score: number = 0;
-    private lives: number = INITIAL_LIVES;
+    public score: number = 0;
+    public lives: number = INITIAL_LIVES;
 
     constructor() {
         super({ key: 'Test' });
@@ -104,8 +104,8 @@ export class TestScene extends Phaser.Scene {
 
         // Click to launch
         this.input.on('pointerdown', () => {
-            if (!this.balls[0]?.isLaunched) {
-                this.balls[0]?.launch();
+            if (this.balls[0] && !this.balls[0].isLaunched) {
+                this.balls[0].launch();
                 this.instructionText.setVisible(false);
             }
         });
@@ -206,56 +206,52 @@ export class TestScene extends Phaser.Scene {
      */
     private showVictory(): void {
         const { width, height } = this.cameras.main;
-
         this.add.rectangle(0, 0, width, height, 0x000000, 0.7).setOrigin(0);
+        this.add.text(width / 2, height / 2 - 40, '🎉 VICTORY! 🎉', { fontSize: '32px', color: '#00ff88', fontStyle: 'bold' }).setOrigin(0.5);
+        this.add.text(width / 2, height / 2 + 20, `Final Score: ${this.score}`, { fontSize: '24px', color: '#ffffff' }).setOrigin(0.5);
+        this.add.text(width / 2, height / 2 + 60, 'Click to restart', { fontSize: '16px', color: '#ffaa00' }).setOrigin(0.5);
+        this.input.once('pointerdown', () => this.scene.restart());
+    }
 
-        this.add
-            .text(width / 2, height / 2 - 40, '🎉 VICTORY! 🎉', {
-                fontSize: '32px',
-                color: '#00ff88',
-                fontStyle: 'bold',
-            })
-            .setOrigin(0.5);
-
-        this.add
-            .text(width / 2, height / 2 + 20, `Final Score: ${this.score}`, {
-                fontSize: '24px',
-                color: '#ffffff',
-            })
-            .setOrigin(0.5);
-
-        this.add
-            .text(width / 2, height / 2 + 60, 'Click to restart', {
-                fontSize: '16px',
-                color: '#ffaa00',
-            })
-            .setOrigin(0.5);
-
-        this.input.once('pointerdown', () => {
-            this.scene.restart();
-        });
+    /**
+     * Show game over message
+     */
+    private showGameOver(): void {
+        const { width, height } = this.cameras.main;
+        this.add.rectangle(0, 0, width, height, 0x000000, 0.7).setOrigin(0);
+        this.add.text(width / 2, height / 2 - 40, '💀 GAME OVER 💀', { fontSize: '32px', color: '#ff0044', fontStyle: 'bold' }).setOrigin(0.5);
+        this.add.text(width / 2, height / 2 + 20, `Final Score: ${this.score}`, { fontSize: '24px', color: '#ffffff' }).setOrigin(0.5);
+        this.add.text(width / 2, height / 2 + 60, 'Click to restart', { fontSize: '16px', color: '#ffaa00' }).setOrigin(0.5);
+        this.input.once('pointerdown', () => this.scene.restart());
     }
 
     update(): void {
         // Update paddle
         this.paddle.update();
 
-        // Update all balls
-        this.balls.forEach((ball, index) => {
-            ball.update();
-
-            // Remove balls that are out of bounds
-            if (ball.isOutOfBounds()) {
-                ball.destroy();
-                this.balls.splice(index, 1);
+        // Update all balls (iterate backwards to safely remove)
+        for (let i = this.balls.length - 1; i >= 0; i--) {
+            const ball = this.balls[i];
+            if (ball && ball.active) {
+                ball.update();
+                if (ball.isOutOfBounds()) {
+                    ball.destroy();
+                    this.balls.splice(i, 1);
+                }
+            } else {
+                this.balls.splice(i, 1);
             }
-        });
+        }
 
         // If no balls left, lose a life
         if (this.balls.length === 0 && this.lives > 0) {
             this.lives--;
             this.updateLives();
-            this.resetBall();
+            if (this.lives > 0) {
+                this.resetBall();
+            } else {
+                this.showGameOver();
+            }
         }
 
         // Update bricks
@@ -282,15 +278,17 @@ export class TestScene extends Phaser.Scene {
      */
     private updateInfoText(): void {
         const activePowerUps = this.powerUpManager.getActivePowerUps();
-        const powerUpsText = activePowerUps.length > 0
-            ? `Active: ${activePowerUps.join(', ')}`
-            : '';
-
+        const powerUpsText = activePowerUps.length > 0 ? `Active: ${activePowerUps.join(', ')}` : '';
         this.powerUpsText.setText(powerUpsText);
 
-        const ballSpeed = this.balls[0]?.body?.velocity
-            ? Math.sqrt(this.balls[0].body.velocity.x ** 2 + this.balls[0].body.velocity.y ** 2)
-            : 0;
+        let ballSpeed = 0;
+        if (this.balls[0] && this.balls[0].body) {
+            const velocity = (this.balls[0].body as any).velocity;
+            if (velocity) {
+                const speed = Math.sqrt(velocity.x ** 2 + velocity.y ** 2);
+                ballSpeed = isNaN(speed) ? 0 : speed;
+            }
+        }
 
         this.infoText.setText([
             `Bricks: ${this.brickManager.getBricksRemaining()}`,

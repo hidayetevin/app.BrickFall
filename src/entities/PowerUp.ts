@@ -38,7 +38,7 @@ export class PowerUp extends Phaser.GameObjects.Container {
         const config = this.getPowerUpConfig(this.type);
 
         // Background glow
-        this.glow = this.scene.make.graphics({ x: 0, y: 0, add: false });
+        this.glow = this.scene.add.graphics();
         this.glow.fillStyle(config.color, 0.3);
         this.glow.fillCircle(0, 0, 18);
         this.add(this.glow);
