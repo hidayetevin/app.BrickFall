@@ -10,7 +10,7 @@ export const GAME_HEIGHT = 667;
 export const PADDLE_WIDTH = 100;
 export const PADDLE_HEIGHT = 15;
 export const PADDLE_SPEED = 480; // Increased by 20% for better responsiveness
-export const PADDLE_Y_OFFSET = 50; // Distance from bottom
+export const PADDLE_Y_OFFSET = 100; // Distance from bottom (increased for banner ad clearance)
 
 // Ball configuration
 export const BALL_RADIUS = 8;
@@ -79,7 +79,7 @@ export const COMBO_TIMEOUT = 2000; // Time window for combo in ms
 // Colors
 export const COLORS = {
     BACKGROUND: 0x1a1a2e,
-    PADDLE: 0x16213e,
+    PADDLE: 0x00d9ff, // Bright cyan for visibility
     BALL: 0xffffff,
     UI_PRIMARY: 0x0f3460,
     UI_SECONDARY: 0x16213e,

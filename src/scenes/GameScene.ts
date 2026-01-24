@@ -283,41 +283,52 @@ export class GameScene extends Phaser.Scene {
             fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(1001);
 
-        // Continue button (if ad is ready)
-        if (this.adMob.isRewardedReady()) {
-            const continueBtn = this.add.rectangle(width / 2, height * 0.5, 240, 60, 0x00aa00)
-                .setOrigin(0.5)
-                .setDepth(1001)
-                .setInteractive({ useHandCursor: true });
+        // Continue button (ALWAYS show, even if not ready)
+        const continueBtn = this.add.rectangle(width / 2, height * 0.5, 240, 60, 0x00aa00)
+            .setOrigin(0.5)
+            .setDepth(1001)
+            .setInteractive({ useHandCursor: true });
 
-            const continueBtnText = this.add.text(width / 2, height * 0.5, '🎁 WATCH AD\nFOR EXTRA LIFE', {
-                fontSize: '16px',
-                color: '#ffffff',
-                fontStyle: 'bold',
-                align: 'center'
-            }).setOrigin(0.5).setDepth(1002);
+        const continueBtnText = this.add.text(width / 2, height * 0.5,
+            this.adMob.isRewardedReady() ? '🎁 WATCH AD\nFOR EXTRA LIFE' : '⏳ LOADING AD...', {
+            fontSize: '16px',
+            color: '#ffffff',
+            fontStyle: 'bold',
+            align: 'center'
+        }).setOrigin(0.5).setDepth(1002);
 
-            continueBtn.on('pointerdown', async () => {
-                const rewarded = await this.adMob.showRewarded();
-                if (rewarded) {
-                    // Grant extra life
-                    this.lives = 1;
-                    this.updateUI();
-                    this.gameState = 'IDLE';
-                    overlay.destroy();
-                    gameOverText.destroy();
-                    continueBtn.destroy();
-                    continueBtnText.destroy();
-                    gameOverBtn.destroy();
-                    gameOverBtnText.destroy();
-                    this.setupBall();
-                    console.log('✅ Extra life granted!');
-                } else {
-                    // Ad failed, go to game over
-                    this.handleGameOver();
-                }
-            });
-        }
+        continueBtn.on('pointerdown', async () => {
+            // Disable button during ad
+            continueBtn.disableInteractive();
+            continueBtnText.setText('⏳ LOADING...');
+
+            const rewarded = await this.adMob.showRewarded();
+            if (rewarded) {
+                // Grant extra life
+                this.lives = 1;
+                this.updateUI();
+                this.gameState = 'IDLE';
+                overlay.destroy();
+                gameOverText.destroy();
+                continueBtn.destroy();
+                continueBtnText.destroy();
+                gameOverBtn.destroy();
+                gameOverBtnText.destroy();
+                this.setupBall();
+                console.log('✅ Extra life granted!');
+            } else {
+                // Ad failed or not ready
+                continueBtnText.setText('❌ AD NOT READY\nTRY AGAIN');
+                continueBtn.setInteractive({ useHandCursor: true });
+
+                // Auto-retry after 2 seconds
+                this.time.delayedCall(2000, () => {
+                    if (this.adMob.isRewardedReady()) {
+                        continueBtnText.setText('🎁 WATCH AD\nFOR EXTRA LIFE');
+                    }
+                });
+            }
+        });
 
         // Game Over button
         const gameOverBtn = this.add.rectangle(width / 2, height * 0.65, 240, 60, 0xaa0000)
