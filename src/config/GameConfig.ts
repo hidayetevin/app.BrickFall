@@ -21,9 +21,12 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     backgroundColor: COLORS.BACKGROUND,
 
     scale: {
-        mode: Phaser.Scale.FIT,
+        mode: Phaser.Scale.RESIZE,
+        parent: 'game-container',
         autoCenter: Phaser.Scale.CENTER_BOTH,
-        zoom: window.devicePixelRatio || 1,
+        width: GAME_WIDTH,
+        height: GAME_HEIGHT,
+        fullscreenTarget: 'game-container',
     },
 
     physics: {
