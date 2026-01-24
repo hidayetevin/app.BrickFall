@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Brick Fall</string>
+    <string name="title_activity_main">Brick Fall</string>
+    <string name="package_name">com.brickfall.game</string>
+    <string name="custom_url_scheme">com.brickfall.game</string>
+</resources>

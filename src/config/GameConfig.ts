@@ -23,6 +23,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
+        zoom: window.devicePixelRatio || 1,
     },
 
     physics: {
@@ -47,6 +48,8 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     render: {
         pixelArt: false,
         antialias: true,
+        roundPixels: true,
+        powerPreference: 'high-performance',
     },
 
     audio: {
