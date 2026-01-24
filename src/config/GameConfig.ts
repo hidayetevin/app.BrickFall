@@ -19,8 +19,8 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     width: GAME_WIDTH,
     height: GAME_HEIGHT,
     backgroundColor: COLORS.BACKGROUND,
-    // @ts-ignore - resolution is valid in Phaser 3 config but missing in types
-    resolution: window.devicePixelRatio || 1,
+    // @ts-ignore - resolution is missing in types but valid
+    resolution: window.devicePixelRatio || 1, // Use native device resolution for sharpness
 
     scale: {
         mode: Phaser.Scale.RESIZE,
@@ -53,7 +53,8 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     render: {
         pixelArt: false,
         antialias: true,
-        roundPixels: true,
+        antialiasGL: true,
+        roundPixels: false, // Disabling this can help with sharper text
         powerPreference: 'high-performance',
     },
 
