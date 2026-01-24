@@ -41,10 +41,12 @@
       display: block;
       width: 100%;
       height: 100%;
-      image-rendering: -webkit-optimize-contrast;
-      image-rendering: crisp-edges;
-      -webkit-backface-visibility: hidden;
-      backface-visibility: hidden;
+      /* Use standard high-quality rendering instead of pixelated */
+      image-rendering: auto;
+      /* Prevent touch actions like zooming/scrolling */
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     #loading {

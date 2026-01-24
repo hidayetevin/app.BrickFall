@@ -40,8 +40,8 @@ export class LevelCompleteScene extends Phaser.Scene {
             color: '#ffffff'
         }).setOrigin(0.5);
 
-        // Stars container background
-        const starsY = height * 0.45;
+        // Stars container background (Moved up)
+        const starsY = height * 0.40;
         const panelWidth = 280;
         const panelHeight = 130;
 
@@ -78,8 +78,8 @@ export class LevelCompleteScene extends Phaser.Scene {
             }
         }
 
-        // 2X KAZAN BUTTON (Show immediately)
-        const doubleBtn = new Button(this, width / 2, height * 0.65, '🎁 2X KAZAN', 240, 70, 0xffaa00, () => {
+        // 2X KAZAN BUTTON (Moved up)
+        const doubleBtn = new Button(this, width / 2, height * 0.58, '🎁 2X KAZAN', 240, 70, 0xffaa00, () => {
             this.handleDoubleReward(data, doubleBtn);
         });
         doubleBtn.setAlpha(0);
@@ -90,18 +90,18 @@ export class LevelCompleteScene extends Phaser.Scene {
             ease: 'Power2'
         });
 
-        // Other buttons (Show after 2.5 seconds)
-        const nextBtn = new Button(this, width / 2, height * 0.75, 'NEXT LEVEL', 240, 60, COLORS.UI_PRIMARY, () => {
+        // Other buttons (Moved up)
+        const nextBtn = new Button(this, width / 2, height * 0.68, 'NEXT LEVEL', 240, 60, COLORS.UI_PRIMARY, () => {
             this.goToNextLevel(data.levelId);
         });
         nextBtn.setAlpha(0);
 
-        const selectBtn = new Button(this, width / 2, height * 0.85, 'LEVEL SELECT', 240, 60, COLORS.UI_SECONDARY, () => {
+        const selectBtn = new Button(this, width / 2, height * 0.78, 'LEVEL SELECT', 240, 60, COLORS.UI_SECONDARY, () => {
             this.scene.start('WorldMap');
         });
         selectBtn.setAlpha(0);
 
-        const menuBtn = new Button(this, width / 2, height * 0.95, 'MAIN MENU', 240, 60, COLORS.UI_SECONDARY, () => {
+        const menuBtn = new Button(this, width / 2, height * 0.88, 'MAIN MENU', 240, 60, COLORS.UI_SECONDARY, () => {
             this.scene.start('Menu');
         });
         menuBtn.setAlpha(0);

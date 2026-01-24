@@ -19,6 +19,8 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     width: GAME_WIDTH,
     height: GAME_HEIGHT,
     backgroundColor: COLORS.BACKGROUND,
+    // @ts-ignore - resolution is valid in Phaser 3 config but missing in types
+    resolution: window.devicePixelRatio || 1,
 
     scale: {
         mode: Phaser.Scale.RESIZE,
