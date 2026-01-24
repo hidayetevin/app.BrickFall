@@ -31,6 +31,11 @@ export class GameScene extends Phaser.Scene {
     private combo: number = 0;
     private lastHitTime: number = 0;
 
+    // Aiming
+    private aimLine!: Phaser.GameObjects.Graphics;
+    private isAiming: boolean = false;
+    private currentAimAngle: number = -90; // Default straight up
+
     private scoreText!: Phaser.GameObjects.Text;
     private livesText!: Phaser.GameObjects.Text;
 
@@ -122,13 +127,36 @@ export class GameScene extends Phaser.Scene {
             color: '#aaaaaa'
         }).setOrigin(0.5);
 
-        this.input.on('pointerdown', () => {
-            if (this.gameState === 'IDLE' && launchText.visible) {
-                this.gameState = 'PLAYING';
+        this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+            // Check if clicking UI elements (pause button, etc)
+            if (pointer.y < 100 && pointer.x < 100) return;
+
+            if (this.gameState === 'IDLE') {
+                this.isAiming = true;
+                this.currentAimAngle = -90;
                 launchText.setVisible(false);
-                this.balls[0].launch();
+                this.updateAimLine(pointer);
             }
         });
+
+        this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+            if (this.isAiming && this.gameState === 'IDLE') {
+                this.updateAimLine(pointer);
+            }
+        });
+
+        this.input.on('pointerup', () => {
+            if (this.isAiming && this.gameState === 'IDLE') {
+                this.isAiming = false;
+                this.aimLine.clear();
+                this.gameState = 'PLAYING';
+                this.balls[0].launch(this.currentAimAngle);
+            }
+        });
+
+        // Initialize aim graphics
+        this.aimLine = this.add.graphics();
+        this.aimLine.setDepth(10);
 
         // Pause Button
         const pauseBtn = this.add.text(20, 50, '⏸️', {
@@ -480,5 +508,54 @@ export class GameScene extends Phaser.Scene {
             // Go to menu
             this.scene.start('Menu');
         });
+    }
+
+    private updateAimLine(pointer: Phaser.Input.Pointer): void {
+        if (!this.balls[0]) return;
+        const ball = this.balls[0];
+
+        // Calculate angle between ball and pointer
+        let angle = Phaser.Math.Angle.Between(ball.x, ball.y, pointer.x, pointer.y);
+        let degrees = Phaser.Math.RadToDeg(angle);
+
+        // Logic to make aiming intuitive:
+        // - Dragging UP should aim UP
+        // - Phaser 0 is RIGHT, -90 is UP, 180/-180 is LEFT, 90 is DOWN
+
+        // If user is dragging BELOW the ball (y > ball.y), they probably mean to aim in that direction
+        // but inverted? Assuming "pull back to aim" mechanism is NOT requested, but rather "drag to point".
+        // The user said: "Oyuncu parmağını kaydırarak yönü değiştirebilecek" -> "Player can change direction by sliding finger"
+        // And "Çıkış noktası topun merkezi olacak" -> "Origin is ball center"
+
+        // So pointer is the target direction.
+
+        // Clamp angle to valid range (-165 to -15 degrees)
+        // Vertical is -90. Allow +/- 75 degrees.
+        // Range: -165 (left limit) <-> -15 (right limit)
+
+        // If the pointer is below the paddle, we should probably ignore or clamp drastically
+        if (pointer.y > ball.y) {
+            // If below, clamp to nearest horizontal
+            if (pointer.x < ball.x) degrees = -165;
+            else degrees = -15;
+        } else {
+            degrees = Phaser.Math.Clamp(degrees, -165, -15);
+        }
+
+        this.currentAimAngle = degrees;
+
+        // Draw line
+        this.aimLine.clear();
+        this.aimLine.lineStyle(4, 0xffffff, 0.5); // Semi-visible white line
+
+        const lineLength = 150;
+        const rads = Phaser.Math.DegToRad(degrees);
+        const endX = ball.x + Math.cos(rads) * lineLength;
+        const endY = ball.y + Math.sin(rads) * lineLength;
+
+        this.aimLine.beginPath();
+        this.aimLine.moveTo(ball.x, ball.y);
+        this.aimLine.lineTo(endX, endY);
+        this.aimLine.strokePath();
     }
 }
