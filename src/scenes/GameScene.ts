@@ -5,6 +5,7 @@ import { BrickManager } from '@systems/BrickManager';
 import { PowerUpManager } from '@systems/PowerUpManager';
 import { LevelManager } from '@systems/LevelManager';
 import { ProgressionManager } from '@systems/ProgressionManager';
+import { AdMobManager } from '../services/AdMobManager';
 import { LevelConfig, LevelStats } from '../types/LevelTypes';
 import { GameState } from '../types/GameTypes';
 import { Brick } from '@entities/Brick';
@@ -16,6 +17,7 @@ import { COLORS, INITIAL_LIVES, PADDLE_Y_OFFSET, BALL_SPEED_INCREMENT } from '@c
 export class GameScene extends Phaser.Scene {
     private levelManager: LevelManager;
     private progressionManager: ProgressionManager;
+    private adMob: AdMobManager;
     private brickManager!: BrickManager;
     private powerUpManager!: PowerUpManager;
 
@@ -36,6 +38,7 @@ export class GameScene extends Phaser.Scene {
         super({ key: 'Game' });
         this.levelManager = LevelManager.getInstance();
         this.progressionManager = ProgressionManager.getInstance();
+        this.adMob = AdMobManager.getInstance();
     }
 
     init(data: { levelId: number }): void {
@@ -261,8 +264,76 @@ export class GameScene extends Phaser.Scene {
             this.setupBall();
             // Show tap to launch again (logic simplified)
         } else {
-            this.handleGameOver();
+            // Offer rewarded ad for continue
+            this.showContinueOption();
         }
+    }
+
+    private showContinueOption(): void {
+        this.gameState = 'GAME_OVER';
+        const { width, height } = this.cameras.main;
+
+        // Dark overlay
+        const overlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.8).setOrigin(0).setDepth(1000);
+
+        // Game Over text
+        const gameOverText = this.add.text(width / 2, height * 0.3, 'GAME OVER', {
+            fontSize: '32px',
+            color: '#ff4444',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setDepth(1001);
+
+        // Continue button (if ad is ready)
+        if (this.adMob.isRewardedReady()) {
+            const continueBtn = this.add.rectangle(width / 2, height * 0.5, 240, 60, 0x00aa00)
+                .setOrigin(0.5)
+                .setDepth(1001)
+                .setInteractive({ useHandCursor: true });
+
+            const continueBtnText = this.add.text(width / 2, height * 0.5, '🎁 WATCH AD\nFOR EXTRA LIFE', {
+                fontSize: '16px',
+                color: '#ffffff',
+                fontStyle: 'bold',
+                align: 'center'
+            }).setOrigin(0.5).setDepth(1002);
+
+            continueBtn.on('pointerdown', async () => {
+                const rewarded = await this.adMob.showRewarded();
+                if (rewarded) {
+                    // Grant extra life
+                    this.lives = 1;
+                    this.updateUI();
+                    this.gameState = 'IDLE';
+                    overlay.destroy();
+                    gameOverText.destroy();
+                    continueBtn.destroy();
+                    continueBtnText.destroy();
+                    gameOverBtn.destroy();
+                    gameOverBtnText.destroy();
+                    this.setupBall();
+                    console.log('✅ Extra life granted!');
+                } else {
+                    // Ad failed, go to game over
+                    this.handleGameOver();
+                }
+            });
+        }
+
+        // Game Over button
+        const gameOverBtn = this.add.rectangle(width / 2, height * 0.65, 240, 60, 0xaa0000)
+            .setOrigin(0.5)
+            .setDepth(1001)
+            .setInteractive({ useHandCursor: true });
+
+        const gameOverBtnText = this.add.text(width / 2, height * 0.65, 'GIVE UP', {
+            fontSize: '18px',
+            color: '#ffffff',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setDepth(1002);
+
+        gameOverBtn.on('pointerdown', () => {
+            this.handleGameOver();
+        });
     }
 
     private handleLevelWin(): void {

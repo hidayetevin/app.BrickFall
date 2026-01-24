@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { gameConfig } from '@config/GameConfig';
+import { AdMobManager } from './services/AdMobManager';
 
 /**
  * Main entry point for Brick Breaker game
@@ -10,6 +11,9 @@ const loading = document.getElementById('loading');
 if (loading) {
     loading.style.display = 'none';
 }
+
+// Initialize AdMob
+AdMobManager.getInstance().initialize();
 
 // Initialize Phaser game
 const game = new Phaser.Game(gameConfig);

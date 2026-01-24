@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { Button } from '@ui/Button';
 import { StorageManager } from '@systems/StorageManager';
+import { AdMobManager } from '../services/AdMobManager';
 import { COLORS } from '@config/Constants';
 
 /**
@@ -8,10 +9,12 @@ import { COLORS } from '@config/Constants';
  */
 export class MenuScene extends Phaser.Scene {
     private storage: StorageManager;
+    private adMob: AdMobManager;
 
     constructor() {
         super({ key: 'Menu' });
         this.storage = StorageManager.getInstance();
+        this.adMob = AdMobManager.getInstance();
     }
 
     create(): void {
@@ -70,5 +73,13 @@ export class MenuScene extends Phaser.Scene {
             color: '#ffcc00',
             fontStyle: 'bold'
         });
+
+        // Show banner ad
+        this.adMob.showBanner();
+    }
+
+    shutdown(): void {
+        // Remove banner when leaving menu
+        this.adMob.removeBanner();
     }
 }

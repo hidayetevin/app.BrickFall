@@ -9,7 +9,7 @@ export const GAME_HEIGHT = 667;
 // Paddle configuration
 export const PADDLE_WIDTH = 100;
 export const PADDLE_HEIGHT = 15;
-export const PADDLE_SPEED = 400;
+export const PADDLE_SPEED = 480; // Increased by 20% for better responsiveness
 export const PADDLE_Y_OFFSET = 50; // Distance from bottom
 
 // Ball configuration

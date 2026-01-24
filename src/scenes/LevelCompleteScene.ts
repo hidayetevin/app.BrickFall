@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { Button } from '@ui/Button';
 import { LevelManager } from '@systems/LevelManager';
+import { AdMobManager } from '../services/AdMobManager';
 import { COLORS } from '@config/Constants';
 
 /**
@@ -8,10 +9,12 @@ import { COLORS } from '@config/Constants';
  */
 export class LevelCompleteScene extends Phaser.Scene {
     private levelManager: LevelManager;
+    private adMob: AdMobManager;
 
     constructor() {
         super({ key: 'LevelComplete' });
         this.levelManager = LevelManager.getInstance();
+        this.adMob = AdMobManager.getInstance();
     }
 
     create(data: { levelId: number, score: number, stars: number }): void {
@@ -88,5 +91,12 @@ export class LevelCompleteScene extends Phaser.Scene {
         new Button(this, width / 2, height * 0.85, 'MAIN MENU', 240, 60, COLORS.UI_SECONDARY, () => {
             this.scene.start('Menu');
         });
+
+        // Show interstitial every 2 levels
+        if (data.levelId % 2 === 0) {
+            this.time.delayedCall(500, () => {
+                this.adMob.showInterstitial();
+            });
+        }
     }
 }

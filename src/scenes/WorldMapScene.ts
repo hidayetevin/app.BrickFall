@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { Button } from '@ui/Button';
 import { LevelManager } from '@systems/LevelManager';
 import { StorageManager } from '@systems/StorageManager';
+import { AdMobManager } from '../services/AdMobManager';
 import { WORLDS } from '@config/LevelData';
 import { COLORS } from '@config/Constants';
 
@@ -11,12 +12,14 @@ import { COLORS } from '@config/Constants';
 export class WorldMapScene extends Phaser.Scene {
     private levelManager: LevelManager;
     private storage: StorageManager;
+    private adMob: AdMobManager;
     private container!: Phaser.GameObjects.Container;
 
     constructor() {
         super({ key: 'WorldMap' });
         this.levelManager = LevelManager.getInstance();
         this.storage = StorageManager.getInstance();
+        this.adMob = AdMobManager.getInstance();
     }
 
     create(): void {
@@ -126,5 +129,13 @@ export class WorldMapScene extends Phaser.Scene {
                 this.container.y = Phaser.Math.Clamp(this.container.y, minScroll, 100);
             }
         });
+
+        // Show banner ad
+        this.adMob.showBanner();
+    }
+
+    shutdown(): void {
+        // Remove banner when leaving
+        this.adMob.removeBanner();
     }
 }
