@@ -123,10 +123,23 @@ export class GameScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         this.input.on('pointerdown', () => {
-            if (this.gameState === 'IDLE') {
+            if (this.gameState === 'IDLE' && launchText.visible) {
                 this.gameState = 'PLAYING';
                 launchText.setVisible(false);
                 this.balls[0].launch();
+            }
+        });
+
+        // Pause Button
+        const pauseBtn = this.add.text(20, 50, '⏸️', {
+            fontSize: '32px'
+        })
+            .setInteractive({ useHandCursor: true })
+            .setDepth(100);
+
+        pauseBtn.on('pointerdown', () => {
+            if (this.gameState === 'PLAYING' || this.gameState === 'IDLE') {
+                this.pauseGame();
             }
         });
     }
@@ -233,6 +246,7 @@ export class GameScene extends Phaser.Scene {
         // Update all balls
         for (let i = this.balls.length - 1; i >= 0; i--) {
             const ball = this.balls[i];
+
             if (ball.active) {
                 ball.update();
 
@@ -376,6 +390,95 @@ export class GameScene extends Phaser.Scene {
         // Small delay before transition to allow cleanup
         this.time.delayedCall(100, () => {
             this.scene.start('GameOver', { levelId: this.levelConfig.id, score: this.score });
+        });
+    }
+
+    private pauseGame(): void {
+        const previousState = this.gameState;
+        this.gameState = 'PAUSED';
+        this.matter.world.pause();
+
+        const { width, height } = this.cameras.main;
+
+        // Overlay
+        const overlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.7)
+            .setOrigin(0)
+            .setDepth(2000)
+            .setInteractive(); // Block clicks
+
+        // Popup Container
+        const container = this.add.container(width / 2, height / 2).setDepth(2001);
+
+        // Popup Background
+        const bg = this.add.rectangle(0, 0, 300, 350, 0x1a1a2e)
+            .setStrokeStyle(2, 0x0f3460);
+        container.add(bg);
+
+        // Title
+        const title = this.add.text(0, -140, 'PAUSED', {
+            fontSize: '32px',
+            color: '#ffffff',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+        container.add(title);
+
+        // Continue Button
+        const continueBtn = this.add.container(0, -50);
+        const cBtnBg = this.add.rectangle(0, 0, 240, 60, 0x00aa00)
+            .setInteractive({ useHandCursor: true });
+        const cBtnText = this.add.text(0, 0, 'CONTINUE', {
+            fontSize: '24px', fontStyle: 'bold', color: '#ffffff'
+        }).setOrigin(0.5);
+        continueBtn.add([cBtnBg, cBtnText]);
+        container.add(continueBtn);
+
+        cBtnBg.on('pointerdown', async () => {
+            // Disable input just in case
+            cBtnBg.disableInteractive();
+
+            // Show Interstitial Ad then resume
+            await this.adMob.showInterstitial();
+
+            // Cleanup and resume
+            container.destroy();
+            overlay.destroy();
+            this.matter.world.resume();
+            this.gameState = previousState;
+        });
+
+
+        // Retry Button
+        const retryBtn = this.add.container(0, 30);
+        const rBtnBg = this.add.rectangle(0, 0, 240, 60, 0x0f3460)
+            .setInteractive({ useHandCursor: true });
+        const rBtnText = this.add.text(0, 0, 'RETRY', {
+            fontSize: '24px', fontStyle: 'bold', color: '#ffffff'
+        }).setOrigin(0.5);
+        retryBtn.add([rBtnBg, rBtnText]);
+        container.add(retryBtn);
+
+        rBtnBg.on('pointerdown', async () => {
+            rBtnBg.disableInteractive();
+            await this.adMob.showInterstitial();
+            // Restart level
+            this.scene.restart({ levelId: this.levelConfig.id });
+        });
+
+        // Main Menu Button
+        const menuBtn = this.add.container(0, 110);
+        const mBtnBg = this.add.rectangle(0, 0, 240, 60, 0xaa0000)
+            .setInteractive({ useHandCursor: true });
+        const mBtnText = this.add.text(0, 0, 'MAIN MENU', {
+            fontSize: '24px', fontStyle: 'bold', color: '#ffffff'
+        }).setOrigin(0.5);
+        menuBtn.add([mBtnBg, mBtnText]);
+        container.add(menuBtn);
+
+        mBtnBg.on('pointerdown', async () => {
+            mBtnBg.disableInteractive();
+            await this.adMob.showInterstitial();
+            // Go to menu
+            this.scene.start('Menu');
         });
     }
 }
