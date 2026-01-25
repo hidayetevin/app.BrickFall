@@ -14,6 +14,10 @@ export class WorldMapScene extends Phaser.Scene {
     private storage: StorageManager;
     private adMob: AdMobManager;
     private container!: Phaser.GameObjects.Container;
+    private startY: number = 0;
+    private isDragging: boolean = false;
+    private dragThreshold: number = 10;
+    private maxScroll: number = 0;
 
     constructor() {
         super({ key: 'WorldMap' });
@@ -30,58 +34,75 @@ export class WorldMapScene extends Phaser.Scene {
 
         // Header
         const header = this.add.container(0, 0);
-        const headerBg = this.add.rectangle(0, 0, width, 80, 0x0f3460).setOrigin(0);
-        const title = this.add.text(width / 2, 40, 'LEVELS', {
-            fontSize: '28px',
-            color: '#ffffff',
-            fontStyle: 'bold'
+        const headerBg = this.add.rectangle(0, 0, width, 100, 0x0f3460).setOrigin(0);
+        headerBg.setFillStyle(0x0f3460, 0.95);
+
+        // Add a bottom line for the header
+        const headerLine = this.add.rectangle(0, 98, width, 2, 0x00d2ff).setOrigin(0);
+
+        const title = this.add.text(width / 2, 50, 'LEVEL SELECTION', {
+            fontSize: '24px',
+            color: '#00d2ff',
+            fontStyle: '900',
+            letterSpacing: 2
         }).setOrigin(0.5);
 
-        const backBtn = new Button(this, 50, 40, '←', 60, 40, 0x16213e, () => {
-            this.scene.start('Menu');
+        const backBtn = new Button(this, 50, 50, '←', 60, 50, 0x16213e, () => {
+            if (!this.isDragging) this.scene.start('Menu');
         });
 
-        header.add([headerBg, title, backBtn]);
-        header.setDepth(10);
+        header.add([headerBg, headerLine, title, backBtn]);
+        header.setDepth(100);
 
         // Scrollable area
-        this.container = this.add.container(0, 100);
+        this.container = this.add.container(0, 120);
 
-        let currentY = 0;
+        let currentY = 20;
 
-        WORLDS.forEach(world => {
+        WORLDS.forEach((world) => {
             const isUnlocked = this.storage.isWorldUnlocked(world.id);
             const progress = this.levelManager.getWorldProgress(world.id);
 
-            // World header
-            const worldHeader = this.add.text(width / 2, currentY, world.name, {
-                fontSize: '24px',
-                color: isUnlocked ? '#ffffff' : '#666666',
-                fontStyle: 'bold'
+            // World Section Background (Subtle)
+            const sectionBg = this.add.rectangle(width / 2, currentY + 100, width - 40, 200, 0x1a1a2e)
+                .setOrigin(0.5, 0)
+                .setStrokeStyle(1, 0x0f3460, 0.5);
+            this.container.add(sectionBg);
+
+            // World title
+            const worldHeader = this.add.text(width / 2, currentY, world.name.toUpperCase(), {
+                fontSize: '20px',
+                color: isUnlocked ? '#ffffff' : '#4a4a4a',
+                fontStyle: 'bold',
+                letterSpacing: 1
             }).setOrigin(0.5);
             this.container.add(worldHeader);
-            currentY += 40;
+            currentY += 35;
 
-            const starInfo = this.add.text(width / 2, currentY, `${progress.stars}/${progress.maxStars} ⭐`, {
-                fontSize: '16px',
-                color: '#ffcc00'
+            // World stars with icons
+            const starStr = `${progress.stars}/${progress.maxStars} ⭐`;
+            const starInfo = this.add.text(width / 2, currentY, starStr, {
+                fontSize: '14px',
+                color: isUnlocked ? '#ffcc00' : '#4a4a4a',
+                fontStyle: 'bold'
             }).setOrigin(0.5);
             this.container.add(starInfo);
-            currentY += 50;
+            currentY += 45;
 
             // Unlock requirement if locked
             if (!isUnlocked) {
-                const lockInfo = this.add.text(width / 2, currentY, `Locked: Needs ${world.unlockStars} ⭐`, {
-                    fontSize: '14px',
-                    color: '#ff4444'
+                const lockInfo = this.add.text(width / 2, currentY, `🔒 REACH ${world.unlockStars} STARS TO UNLOCK`, {
+                    fontSize: '12px',
+                    color: '#ff4444',
+                    fontStyle: 'bold'
                 }).setOrigin(0.5);
                 this.container.add(lockInfo);
-                currentY += 40;
+                currentY += 30;
             }
 
             // Level grid
             const cols = 4;
-            const spacing = 75;
+            const spacing = 80;
             const startX = (width - (cols - 1) * spacing) / 2;
 
             world.levels.forEach((levelId, index) => {
@@ -89,45 +110,80 @@ export class WorldMapScene extends Phaser.Scene {
                 const c = index % cols;
 
                 const lx = startX + c * spacing;
-                const ly = currentY + r * spacing;
+                const ly = currentY + r * spacing + 30;
 
                 const isLevelUnlocked = this.storage.isLevelUnlocked(levelId) && isUnlocked;
                 const stars = this.storage.getLevelStars(levelId);
 
-                // Level button
-                const btn = new Button(this, lx, ly, levelId.toString(), 60, 60, isLevelUnlocked ? 0x0f3460 : 0x222222, () => {
-                    if (isLevelUnlocked) {
+                // Level card
+                const levelColor = isLevelUnlocked ? 0x0f3460 : 0x1a1a1a;
+                const btn = new Button(this, lx, ly, levelId.toString(), 65, 65, levelColor, () => {
+                    if (isLevelUnlocked && !this.isDragging) {
                         this.scene.start('Game', { levelId });
                     }
                 });
 
-                if (!isLevelUnlocked) btn.setAlpha(0.5);
+                if (!isLevelUnlocked) {
+                    btn.setAlpha(0.3);
+                } else {
+                    // Add a subtle glow/border to unlocked buttons
+                    const glow = this.add.rectangle(0, 0, 68, 68, 0x00d2ff, 0.2).setOrigin(0.5);
+                    btn.addAt(glow, 0);
+                }
+
                 this.container.add(btn);
 
-                // Level stars
-                if (stars > 0) {
-                    const starText = this.add.text(lx, ly + 25, '⭐'.repeat(stars), {
-                        fontSize: '12px'
+                // Stars below levels
+                if (isLevelUnlocked) {
+                    const starLayout = this.add.text(lx, ly + 28, '⭐'.repeat(stars) || '☆☆☆', {
+                        fontSize: '10px',
+                        color: stars > 0 ? '#ffcc00' : '#444444'
                     }).setOrigin(0.5);
-                    this.container.add(starText);
+                    this.container.add(starLayout);
                 }
             });
 
-            currentY += Math.ceil(world.levels.length / cols) * spacing + 60;
+            const gridRows = Math.ceil(world.levels.length / cols);
+            const gridHeight = gridRows * spacing + 40;
+            sectionBg.height = gridHeight + (isUnlocked ? 80 : 110);
+
+            currentY += gridHeight + 100;
         });
 
-        // Add dummy spacing at end for scrolling
-        const dummy = this.add.rectangle(0, currentY, 1, 1);
-        this.container.add(dummy);
+        this.maxScroll = height - currentY - 200;
 
-        // Simple touch scroll handling
+        // --- FIXED SCROLL LOGIC ---
+        this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+            this.startY = pointer.y;
+            this.isDragging = false;
+        });
+
         this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
             if (pointer.isDown) {
-                this.container.y += pointer.velocity.y;
-                // Clamp scrolling
-                const minScroll = height - currentY - 150;
-                this.container.y = Phaser.Math.Clamp(this.container.y, minScroll, 100);
+                const dy = pointer.y - this.startY;
+
+                if (!this.isDragging && Math.abs(dy) > this.dragThreshold) {
+                    this.isDragging = true;
+                }
+
+                if (this.isDragging) {
+                    // Move container based on mouse movement delta
+                    // Using direct subtraction for more controlled movement
+                    const deltaMove = pointer.y - pointer.prevPosition.y;
+                    this.container.y += deltaMove;
+
+                    // Clamping
+                    if (this.container.y > 120) this.container.y = 120;
+                    if (this.container.y < this.maxScroll) this.container.y = this.maxScroll;
+                }
             }
+        });
+
+        this.input.on('pointerup', () => {
+            // End dragging state shortly after finger lift to avoid triggering clicks
+            this.time.delayedCall(50, () => {
+                this.isDragging = false;
+            });
         });
 
         // Show banner ad
