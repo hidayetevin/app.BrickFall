@@ -16,13 +16,14 @@
         "phaser": "^3.80.1"
     },
     "devDependencies": {
+        "@capacitor-community/admob": "^5.0.0",
         "@capacitor/android": "^5.7.0",
+        "@capacitor/assets": "^3.0.5",
         "@capacitor/cli": "^5.7.0",
         "@capacitor/core": "^5.7.0",
-        "@capacitor-community/admob": "^5.0.0",
         "@capacitor/haptics": "^5.0.7",
-        "@capacitor/status-bar": "^5.0.7",
         "@capacitor/splash-screen": "^5.0.7",
+        "@capacitor/status-bar": "^5.0.7",
         "@typescript-eslint/eslint-plugin": "^6.21.0",
         "@typescript-eslint/parser": "^6.21.0",
         "eslint": "^8.56.0",

@@ -1,4 +1,4 @@
-import { AdMob, BannerAdOptions, BannerAdSize, BannerAdPosition, RewardAdPluginEvents, AdMobRewardItem } from '@capacitor-community/admob';
+import { AdMob, BannerAdOptions, BannerAdSize, BannerAdPosition, RewardAdPluginEvents, InterstitialAdPluginEvents, AdMobRewardItem } from '@capacitor-community/admob';
 import { Capacitor } from '@capacitor/core';
 
 /**
@@ -21,7 +21,35 @@ export class AdMobManager {
         rewarded: 'ca-app-pub-3940256099942544/5224354917'
     };
 
-    private constructor() { }
+    private constructor() {
+        // Listen for ad dismissal to fix layout issues
+        if (Capacitor.isNativePlatform()) {
+            this.setupAdListeners();
+        }
+    }
+
+    private setupAdListeners(): void {
+        // Interstitial Dismissed
+        AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => {
+            this.forceResize();
+        });
+
+        // Rewarded Dismissed (or Closed)
+        AdMob.addListener(RewardAdPluginEvents.Dismissed, () => {
+            this.forceResize();
+        });
+    }
+
+    private forceResize(): void {
+        // Force a resize event to fix Phaser layout on Android after ad close
+        setTimeout(() => {
+            window.dispatchEvent(new Event('resize'));
+            // Double check after a short delay
+            setTimeout(() => {
+                window.dispatchEvent(new Event('resize'));
+            }, 500);
+        }, 100);
+    }
 
     public static getInstance(): AdMobManager {
         if (!AdMobManager.instance) {
