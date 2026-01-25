@@ -1,11 +1,11 @@
 import Phaser from 'phaser';
-import { PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_SPEED, GAME_WIDTH, COLORS } from '@config/Constants';
+import { PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_SPEED, GAME_WIDTH } from '@config/Constants';
 
 /**
  * Paddle - Player-controlled platform at the bottom of the screen
  * Handles touch/mouse movement and ball attachment
  */
-export class Paddle extends Phaser.GameObjects.Rectangle {
+export class Paddle extends Phaser.Physics.Matter.Sprite {
     public scene: Phaser.Scene;
     public declare body: MatterJS.BodyType;
 
@@ -21,13 +21,16 @@ export class Paddle extends Phaser.GameObjects.Rectangle {
         const paddleWidth = width || PADDLE_WIDTH;
         const paddleHeight = height || PADDLE_HEIGHT;
 
-        super(scene, x, y, paddleWidth, paddleHeight, COLORS.PADDLE);
+        super(scene.matter.world, x, y, 'paddle');
 
         this.scene = scene;
         this.defaultWidth = paddleWidth;
         this.currentWidth = paddleWidth;
         this.targetX = x;
         this.moveSpeed = PADDLE_SPEED;
+
+        // Set dimensions
+        this.setDisplaySize(paddleWidth, paddleHeight);
 
         // Add to scene
         scene.add.existing(this);
@@ -43,8 +46,16 @@ export class Paddle extends Phaser.GameObjects.Rectangle {
      * Setup Matter.js physics body
      */
     private setupPhysics(): void {
-        // Create static physics body (paddle doesn't fall)
-        this.scene.matter.add.gameObject(this, {
+        this.setStatic(true);
+        this.setFriction(0, 0);
+        this.setBounce(1);
+
+        // Ensure rectangular body matches visual
+        this.setBody({
+            type: 'rectangle',
+            width: this.displayWidth,
+            height: this.displayHeight
+        }, {
             isStatic: true,
             friction: 0,
             frictionStatic: 0,
@@ -110,7 +121,7 @@ export class Paddle extends Phaser.GameObjects.Rectangle {
     /**
      * Stop paddle movement
      */
-    public stop(): void {
+    public stopMovement(): void {
         this.targetX = this.x;
     }
 
@@ -119,10 +130,10 @@ export class Paddle extends Phaser.GameObjects.Rectangle {
      */
     public extend(multiplier: number = 1.3): void {
         const newWidth = this.defaultWidth * multiplier;
-
-        // Shape size
-        this.width = newWidth;
         this.currentWidth = newWidth;
+
+        // Update visual size
+        this.setDisplaySize(newWidth, this.displayHeight);
 
         // Update physics body
         if (this.body) {
@@ -134,8 +145,10 @@ export class Paddle extends Phaser.GameObjects.Rectangle {
      * Shrink paddle to default width
      */
     public shrink(): void {
-        this.width = this.defaultWidth;
         this.currentWidth = this.defaultWidth;
+
+        // Reset visual size
+        this.setDisplaySize(this.defaultWidth, this.displayHeight);
 
         // Reset physics body
         if (this.body) {
@@ -200,9 +213,9 @@ export class Paddle extends Phaser.GameObjects.Rectangle {
     }
 
     /**
-     * Get paddle velocity (for ball bounce angle calculation)
+     * Get paddle movement delta (for ball bounce angle calculation)
      */
-    public getVelocity(): number {
+    public getMovementDelta(): number {
         return this.targetX - this.x;
     }
 

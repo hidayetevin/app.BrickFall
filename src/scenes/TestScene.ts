@@ -168,9 +168,9 @@ export class TestScene extends Phaser.Scene {
         ball.bounce(pair.collision.normal);
 
         // Visual feedback
-        this.paddle.setFillStyle(COLORS.SUCCESS);
+        this.paddle.setTint(0x00ff00);
         this.time.delayedCall(100, () => {
-            this.paddle.setFillStyle(COLORS.PADDLE);
+            this.paddle.clearTint();
         });
     }
 

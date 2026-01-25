@@ -59,6 +59,9 @@ export class BootScene extends Phaser.Scene {
         // Ball
         this.load.image('ball', 'ball/ball.png');
 
+        // Paddle
+        this.load.image('paddle', 'paddle/paddle.png');
+
         // Add a small delay for simulation if needed, or remove it as we are now loading real assets
         // For now, let's keep the delay logic if you want but the loader will handle real assets
     }
