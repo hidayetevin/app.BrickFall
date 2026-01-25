@@ -56,6 +56,9 @@ export class BootScene extends Phaser.Scene {
             frameHeight: 204, // 1024 / 5 roughly
         });
 
+        // Ball
+        this.load.image('ball', 'ball/ball.png');
+
         // Add a small delay for simulation if needed, or remove it as we are now loading real assets
         // For now, let's keep the delay logic if you want but the loader will handle real assets
     }

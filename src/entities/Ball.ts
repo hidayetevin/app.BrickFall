@@ -18,20 +18,14 @@ export class Ball extends Phaser.Physics.Matter.Sprite {
     constructor(scene: Phaser.Scene, x: number, y: number, radius?: number) {
         const ballRadius = radius || BALL_RADIUS;
 
-        // Create a circle texture if it doesn't exist
-        if (!scene.textures.exists('ball')) {
-            const graphics = scene.make.graphics({ x: 0, y: 0 });
-            graphics.fillStyle(0xffffff, 1);
-            graphics.fillCircle(ballRadius, ballRadius, ballRadius);
-            graphics.generateTexture('ball', ballRadius * 2, ballRadius * 2);
-            graphics.destroy();
-        }
-
         super(scene.matter.world, x, y, 'ball');
 
         this.radius = ballRadius;
         this.baseSpeed = BALL_BASE_SPEED;
         this.currentSpeed = BALL_BASE_SPEED;
+
+        // Set scale to match game radius
+        this.setDisplaySize(ballRadius * 2, ballRadius * 2);
 
         // Add to scene
         scene.add.existing(this);
@@ -232,6 +226,9 @@ export class Ball extends Phaser.Physics.Matter.Sprite {
 
         this.preventHorizontalBounce();
         this.updateTrail();
+
+        // Add rotation effect
+        this.rotation += 0.05;
 
         // Bounds bounce with position clamping
         const gameWidth = this.scene.scale.width;
