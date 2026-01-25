@@ -52,13 +52,11 @@ export class MetalBrick extends Brick {
      * Create spark particle effect
      */
     private createSparks(): void {
-        const sparkCount = 5;
+        const sparkCount = 2; // Reduced from 5
 
         for (let i = 0; i < sparkCount; i++) {
             const angle = Math.random() * Math.PI * 2;
-            const speed = 30 + Math.random() * 50;
-            const sparkSize = 2 + Math.random() * 2;
-
+            const sparkSize = 1;
             const spark = this.scene.add.rectangle(
                 this.x,
                 this.y,
@@ -68,6 +66,7 @@ export class MetalBrick extends Brick {
             );
 
             // Random spark direction
+            const speed = BRICK_WIDTH / 30; // 1/30th of the brick size
             const targetX = this.x + Math.cos(angle) * speed;
             const targetY = this.y + Math.sin(angle) * speed;
 
@@ -78,7 +77,7 @@ export class MetalBrick extends Brick {
                 alpha: 0,
                 scaleX: 0,
                 scaleY: 0,
-                duration: 200 + Math.random() * 200,
+                duration: 150, // Extremely short duration for the tiny spread
                 ease: 'Power2',
                 onComplete: () => spark.destroy(),
             });
@@ -92,15 +91,15 @@ export class MetalBrick extends Brick {
         super.createDestructionParticles();
 
         // Extra metal fragments
-        for (let i = 0; i < 12; i++) {
-            const angle = (Math.PI * 2 * i) / 12;
-            const speed = 60 + Math.random() * 80;
+        for (let i = 0; i < 8; i++) { // Reduced from 12
+            const angle = (Math.PI * 2 * i) / 8;
+            const speed = BRICK_WIDTH / 30; // Reduced from 60+80
 
             const fragment = this.scene.add.rectangle(
                 this.x,
                 this.y,
-                3,
-                3,
+                2, // Reduced from 3
+                2,
                 0xffffff
             );
 
@@ -110,7 +109,7 @@ export class MetalBrick extends Brick {
                 y: this.y + Math.sin(angle) * speed,
                 alpha: 0,
                 rotation: Math.random() * Math.PI * 2,
-                duration: 400 + Math.random() * 300,
+                duration: 300 + Math.random() * 200,
                 onComplete: () => fragment.destroy(),
             });
         }

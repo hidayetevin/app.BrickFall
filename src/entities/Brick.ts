@@ -167,20 +167,18 @@ export abstract class Brick extends Phaser.Physics.Matter.Sprite {
      * Create particle effect when brick is destroyed
      */
     protected createDestructionParticles(): void {
-        const particleCount = 8;
-        // Use tint or frame colors for particles if we had color data, 
-        // for now let's use a generic white/bright spark
+        const particleCount = 6; // Reduced count
         const color = 0xffffff;
 
         for (let i = 0; i < particleCount; i++) {
             const angle = (Math.PI * 2 * i) / particleCount;
-            const speed = 50 + Math.random() * 100;
+            const speed = Math.random() * 4; // Drastically reduced spread
 
             const particle = this.scene.add.rectangle(
                 this.x,
                 this.y,
-                4,
-                4,
+                1, // Reduced size to 1 for a finer look
+                1,
                 color
             );
 
@@ -189,7 +187,7 @@ export abstract class Brick extends Phaser.Physics.Matter.Sprite {
                 x: this.x + Math.cos(angle) * speed,
                 y: this.y + Math.sin(angle) * speed,
                 alpha: 0,
-                duration: 300 + Math.random() * 200,
+                duration: 150 + Math.random() * 100, // Shorter duration
                 onComplete: () => particle.destroy(),
             });
         }
