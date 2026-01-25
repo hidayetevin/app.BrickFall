@@ -67,11 +67,16 @@ export class WorldMapScene extends Phaser.Scene {
         let currentY = 20;
 
         // Dynamic Grid Calculation
-        const minSpacing = 75;
-        const availableWidth = width - 60; // Margin
-        const cols = Math.floor(availableWidth / minSpacing);
-        const spacing = availableWidth / (cols - 1 || 1);
-        const startX = (width - (cols - 1) * (cols > 1 ? spacing : 0)) / 2;
+        const panelMargin = 20;
+        const panelPadding = 40;
+        const availableGridWidth = width - (panelMargin * 2) - (panelPadding * 2);
+
+        const minSpacing = isSmallScreen ? 70 : 80;
+        const cols = Math.max(1, Math.floor(availableGridWidth / minSpacing));
+
+        // Use a fixed spacing or distribute if multiple columns
+        const spacing = cols > 1 ? availableGridWidth / (cols - 1) : 0;
+        const startX = width / 2 - ((cols - 1) * spacing) / 2;
 
         WORLDS.forEach((world) => {
             const isUnlocked = this.storage.isWorldUnlocked(world.id);
@@ -79,7 +84,7 @@ export class WorldMapScene extends Phaser.Scene {
 
             // World title
             const worldHeader = this.add.text(width / 2, currentY, world.name.toUpperCase(), {
-                fontSize: isSmallScreen ? '16px' : '20px',
+                fontSize: isSmallScreen ? '18px' : '22px',
                 color: isUnlocked ? '#ffffff' : '#4a4a4a',
                 fontStyle: 'bold',
                 letterSpacing: 1
@@ -110,20 +115,21 @@ export class WorldMapScene extends Phaser.Scene {
 
             // Grid start Y
             const gridStartY = currentY;
+            const cardSize = isSmallScreen ? 55 : 65;
+            const rowHeight = isSmallScreen ? 80 : 95;
 
             world.levels.forEach((levelId, index) => {
                 const r = Math.floor(index / cols);
                 const c = index % cols;
 
-                const lx = startX + c * (cols > 1 ? spacing : 0);
-                const ly = gridStartY + r * (isSmallScreen ? 75 : 85) + 30;
+                const lx = startX + c * spacing;
+                const ly = gridStartY + r * rowHeight + (cardSize / 2);
 
                 const isLevelUnlocked = this.storage.isLevelUnlocked(levelId) && isUnlocked;
                 const stars = this.storage.getLevelStars(levelId);
 
                 // Level card
                 const levelColor = isLevelUnlocked ? 0x0f3460 : 0x1a1a1a;
-                const cardSize = isSmallScreen ? 55 : 65;
                 const btn = new Button(this, lx, ly, levelId.toString(), cardSize, cardSize, levelColor, () => {
                     try {
                         if (isLevelUnlocked && !this.isDragging) {
@@ -137,8 +143,8 @@ export class WorldMapScene extends Phaser.Scene {
                 if (!isLevelUnlocked) {
                     btn.setAlpha(0.3);
                 } else {
-                    const glowScale = isSmallScreen ? 58 : 68;
-                    const glow = this.add.rectangle(0, 0, glowScale, glowScale, 0x00d2ff, 0.2).setOrigin(0.5);
+                    const glowSize = cardSize + 4;
+                    const glow = this.add.rectangle(0, 0, glowSize, glowSize, 0x00d2ff, 0.2).setOrigin(0.5);
                     btn.addAt(glow, 0);
                 }
 
@@ -146,8 +152,8 @@ export class WorldMapScene extends Phaser.Scene {
 
                 // Stars below levels
                 if (isLevelUnlocked) {
-                    const starLayout = this.add.text(lx, ly + (isSmallScreen ? 24 : 28), '⭐'.repeat(stars) || '☆☆☆', {
-                        fontSize: isSmallScreen ? '8px' : '10px',
+                    const starLayout = this.add.text(lx, ly + (cardSize / 2) + 12, '⭐'.repeat(stars) || '☆☆☆', {
+                        fontSize: isSmallScreen ? '9px' : '11px',
                         color: stars > 0 ? '#ffcc00' : '#444444'
                     }).setOrigin(0.5);
                     this.container.add(starLayout);
@@ -155,15 +161,16 @@ export class WorldMapScene extends Phaser.Scene {
             });
 
             const gridRows = Math.ceil(world.levels.length / cols);
-            const gridH = gridRows * (isSmallScreen ? 75 : 85) + 40;
+            const gridH = gridRows * rowHeight;
 
-            // Background panel
-            const sectionBg = this.add.rectangle(width / 2, worldHeader.y - 20, width - 30, gridH + (isUnlocked ? 90 : 120), 0x1a1a2e)
+            // Background panel (Calculated to perfectly fit buttons inside)
+            const panelHeight = (gridStartY - worldHeader.y) + gridH + 30;
+            const sectionBg = this.add.rectangle(width / 2, worldHeader.y - 25, width - (panelMargin * 2), panelHeight, 0x1a1a2e)
                 .setOrigin(0.5, 0)
-                .setStrokeStyle(1, 0x0f3460, 0.5);
+                .setStrokeStyle(2, 0x0f3460, 0.8);
             this.container.addAt(sectionBg, 0);
 
-            currentY += gridH + 100;
+            currentY += gridH + 120;
         });
 
         this.maxScroll = height - currentY - 200;
