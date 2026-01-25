@@ -23,13 +23,10 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     resolution: window.devicePixelRatio || 1, // Use native device resolution for sharpness
 
     scale: {
-        mode: Phaser.Scale.FIT,
+        mode: Phaser.Scale.RESIZE,
         parent: 'game-container',
-        autoCenter: Phaser.Scale.CENTER_BOTH,
         width: GAME_WIDTH,
         height: GAME_HEIGHT,
-        autoRound: true,
-        expandParent: true,
     },
 
     physics: {
