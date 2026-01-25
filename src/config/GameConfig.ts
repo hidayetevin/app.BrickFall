@@ -23,12 +23,13 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     resolution: window.devicePixelRatio || 1, // Use native device resolution for sharpness
 
     scale: {
-        mode: Phaser.Scale.RESIZE,
+        mode: Phaser.Scale.FIT,
         parent: 'game-container',
         autoCenter: Phaser.Scale.CENTER_BOTH,
         width: GAME_WIDTH,
         height: GAME_HEIGHT,
-        fullscreenTarget: 'game-container',
+        autoRound: true,
+        expandParent: true,
     },
 
     physics: {
@@ -54,8 +55,9 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
         pixelArt: false,
         antialias: true,
         antialiasGL: true,
-        roundPixels: false, // Disabling this can help with sharper text
+        roundPixels: true, // Force integer pixel drawing for maximum sharpness
         powerPreference: 'high-performance',
+        batchSize: 4096,
     },
 
     audio: {
