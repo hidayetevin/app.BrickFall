@@ -154,36 +154,49 @@ export class WorldMapScene extends Phaser.Scene {
 
         // --- FIXED SCROLL LOGIC ---
         this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-            this.startY = pointer.y;
-            this.isDragging = false;
+            try {
+                this.startY = pointer.y;
+                this.isDragging = false;
+            } catch (e) {
+                console.error('❌ Scroll start error:', e);
+            }
         });
 
         this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
-            if (pointer.isDown) {
-                const dy = pointer.y - this.startY;
+            try {
+                if (pointer.isDown) {
+                    const dy = pointer.y - this.startY;
 
-                if (!this.isDragging && Math.abs(dy) > this.dragThreshold) {
-                    this.isDragging = true;
+                    if (!this.isDragging && Math.abs(dy) > this.dragThreshold) {
+                        this.isDragging = true;
+                    }
+
+                    if (this.isDragging) {
+                        // Move container based on mouse movement delta
+                        const deltaMove = pointer.y - pointer.prevPosition.y;
+                        this.container.y += deltaMove;
+
+                        // Clamping
+                        if (this.container.y > 120) this.container.y = 120;
+                        if (this.container.y < this.maxScroll) this.container.y = this.maxScroll;
+                    }
                 }
-
-                if (this.isDragging) {
-                    // Move container based on mouse movement delta
-                    // Using direct subtraction for more controlled movement
-                    const deltaMove = pointer.y - pointer.prevPosition.y;
-                    this.container.y += deltaMove;
-
-                    // Clamping
-                    if (this.container.y > 120) this.container.y = 120;
-                    if (this.container.y < this.maxScroll) this.container.y = this.maxScroll;
-                }
+            } catch (e) {
+                console.error('❌ Scrolling error:', e);
+                this.isDragging = false;
             }
         });
 
         this.input.on('pointerup', () => {
-            // End dragging state shortly after finger lift to avoid triggering clicks
-            this.time.delayedCall(50, () => {
+            try {
+                // End dragging state shortly after finger lift to avoid triggering clicks
+                this.time.delayedCall(50, () => {
+                    this.isDragging = false;
+                });
+            } catch (e) {
+                console.error('❌ Scroll end error:', e);
                 this.isDragging = false;
-            });
+            }
         });
 
         // Show banner ad

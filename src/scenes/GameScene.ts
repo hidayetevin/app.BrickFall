@@ -174,60 +174,80 @@ export class GameScene extends Phaser.Scene {
 
     private setupEvents(): void {
         this.events.on('brickDestroyed', (data: any) => {
-            // Don't process brick events if game is ending
-            if (this.gameState !== 'PLAYING') return;
+            try {
+                // Don't process brick events if game is ending
+                if (this.gameState !== 'PLAYING') return;
 
-            this.handleScore(data.points);
-            this.powerUpManager.spawnPowerUp(data.x, data.y);
+                this.handleScore(data.points);
+                this.powerUpManager.spawnPowerUp(data.x, data.y);
 
-            if (this.brickManager.getBricksRemaining() === 0) {
-                this.handleLevelWin();
+                if (this.brickManager.getBricksRemaining() === 0) {
+                    this.handleLevelWin();
+                }
+            } catch (e) {
+                console.error('❌ Error handling brick destruction:', e);
             }
         });
 
         this.events.on('addLife', () => {
-            this.lives++;
-            this.updateUI();
+            try {
+                this.lives++;
+                this.updateUI();
+            } catch (e) {
+                console.error('❌ Error adding life:', e);
+            }
         });
     }
 
     private setupCollisions(): void {
         this.matter.world.on('collisionstart', (event: Phaser.Physics.Matter.Events.CollisionStartEvent) => {
-            event.pairs.forEach((pair) => {
-                const { bodyA, bodyB } = pair;
+            try {
+                event.pairs.forEach((pair) => {
+                    const { bodyA, bodyB } = pair;
 
-                const ball = this.balls.find(b => b.body === bodyA || b.body === bodyB);
-                if (!ball) return;
+                    const ball = this.balls.find(b => b.body === bodyA || b.body === bodyB);
+                    if (!ball) return;
 
-                const otherBody = (bodyA === ball.body) ? bodyB : bodyA;
-                const otherObject = (otherBody as any).gameObject;
+                    const otherBody = (bodyA === ball.body) ? bodyB : bodyA;
+                    const otherObject = (otherBody as any).gameObject;
 
-                if (!otherObject) return;
+                    if (!otherObject) return;
 
-                if (otherObject instanceof Brick) {
-                    this.handleBrickHit(ball, otherObject, pair);
-                } else if (otherObject instanceof Paddle) {
-                    this.handlePaddleHit(ball, otherObject, pair);
-                }
-            });
+                    if (otherObject instanceof Brick) {
+                        this.handleBrickHit(ball, otherObject, pair);
+                    } else if (otherObject instanceof Paddle) {
+                        this.handlePaddleHit(ball, otherObject, pair);
+                    }
+                });
+            } catch (e) {
+                console.error('❌ Collision handling error:', e);
+            }
         });
     }
 
     private handleBrickHit(ball: Ball, brick: Brick, pair: any): void {
-        if (brick.isDestroyed) return;
+        try {
+            if (brick.isDestroyed) return;
 
-        // Apply physical bounce
-        ball.bounce(pair.collision.normal);
+            // Apply physical bounce
+            ball.bounce(pair.collision.normal);
 
-        // Delay destruction so physics can resolve first
-        this.time.delayedCall(0, () => {
-            if (brick && !brick.isDestroyed) {
-                brick.hit();
-            }
-        });
+            // Delay destruction so physics can resolve first
+            this.time.delayedCall(0, () => {
+                try {
+                    if (brick && !brick.isDestroyed) {
+                        brick.hit();
+                    }
+                } catch (e) {
+                    console.error('❌ Error in delayed brick hit:', e);
+                }
+            });
 
-        // Update target speed
-        ball.setSpeed(ball.currentSpeed + BALL_SPEED_INCREMENT);
+            // Update target speed
+            ball.setSpeed(ball.currentSpeed + BALL_SPEED_INCREMENT);
+        } catch (e) {
+            console.error('❌ Error handling brick hit:', e);
+        }
     }
 
     private handlePaddleHit(ball: Ball, _paddle: Paddle, pair: any): void {
@@ -266,31 +286,37 @@ export class GameScene extends Phaser.Scene {
     }
 
     update(): void {
-        if (this.gameState !== 'PLAYING') return;
+        try {
+            if (this.gameState !== 'PLAYING') return;
 
-        this.paddle.update();
-        this.powerUpManager.update();
+            this.paddle.update();
+            this.powerUpManager.update();
 
-        // Update all balls
-        for (let i = this.balls.length - 1; i >= 0; i--) {
-            const ball = this.balls[i];
+            // Update all balls
+            for (let i = this.balls.length - 1; i >= 0; i--) {
+                const ball = this.balls[i];
 
-            if (ball.active) {
-                ball.update();
+                if (ball && ball.active) {
+                    ball.update();
 
-                // Out of bounds
-                if (ball.isOutOfBounds()) {
-                    ball.destroy();
+                    // Out of bounds
+                    if (ball.isOutOfBounds()) {
+                        ball.destroy();
+                        this.balls.splice(i, 1);
+                    }
+                } else {
                     this.balls.splice(i, 1);
                 }
-            } else {
-                this.balls.splice(i, 1);
             }
-        }
 
-        // If no balls left
-        if (this.balls.length === 0) {
-            this.handleBallLoss();
+            // If no balls left
+            if (this.balls.length === 0) {
+                this.handleBallLoss();
+            }
+        } catch (e) {
+            console.error('❌ Main update loop error:', e);
+            // Attempt to recover if possible, or force cleanup
+            if (this.balls.length === 0) this.handleBallLoss();
         }
     }
 

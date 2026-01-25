@@ -195,57 +195,61 @@ export class Ball extends Phaser.Physics.Matter.Sprite {
      * Update ball physics and appearance
      */
     public update(): void {
-        if (!this.active || !this.isLaunched || !this.body || !this.scene) return;
+        try {
+            if (!this.active || !this.isLaunched || !this.body || !this.scene) return;
 
-        const velocity = (this.body as any).velocity;
+            const velocity = (this.body as any).velocity;
 
-        // Final safety check for NaN
-        if (isNaN(velocity.x) || isNaN(velocity.y) || isNaN(this.x) || isNaN(this.y)) {
-            console.warn('⚠️ Physics NaN detected, correcting ball state...');
+            // Final safety check for NaN
+            if (isNaN(velocity.x) || isNaN(velocity.y) || isNaN(this.x) || isNaN(this.y)) {
+                console.warn('⚠️ Physics NaN detected, correcting ball state...');
 
-            // Try to recover position
-            if (isNaN(this.x) || isNaN(this.y)) {
-                this.setPosition(this.scene.scale.width / 2, this.scene.scale.height / 2);
+                // Try to recover position
+                if (isNaN(this.x) || isNaN(this.y)) {
+                    this.setPosition(this.scene.scale.width / 2, this.scene.scale.height / 2);
+                }
+
+                // Reset velocity to a safe downward direction to return to play
+                this.setVelocity(0, this.currentSpeed);
+                return;
             }
 
-            // Reset velocity to a safe downward direction to return to play
-            this.setVelocity(0, this.currentSpeed);
-            return;
-        }
-
-        // Maintain constant speed
-        const currentSpeedSq = velocity.x ** 2 + velocity.y ** 2;
-        if (currentSpeedSq < 1) { // If speed is dangerously low (near stop)
-            this.launch(); // Use default launch to get it moving again
-        } else {
-            const currentSpeed = Math.sqrt(currentSpeedSq);
-            if (Math.abs(currentSpeed - this.currentSpeed) > 1) { // Increased threshold slightly
-                const ratio = this.currentSpeed / currentSpeed;
-                if (isFinite(ratio)) {
-                    this.setVelocity(velocity.x * ratio, velocity.y * ratio);
+            // Maintain constant speed
+            const currentSpeedSq = velocity.x ** 2 + velocity.y ** 2;
+            if (currentSpeedSq < 1) { // If speed is dangerously low (near stop)
+                this.launch(); // Use default launch to get it moving again
+            } else {
+                const currentSpeed = Math.sqrt(currentSpeedSq);
+                if (Math.abs(currentSpeed - this.currentSpeed) > 1) { // Increased threshold slightly
+                    const ratio = this.currentSpeed / currentSpeed;
+                    if (isFinite(ratio)) {
+                        this.setVelocity(velocity.x * ratio, velocity.y * ratio);
+                    }
                 }
             }
-        }
 
-        this.preventHorizontalBounce();
-        this.updateTrail();
+            this.preventHorizontalBounce();
+            this.updateTrail();
 
-        // Add rotation effect
-        this.rotation += 0.05;
+            // Add rotation effect
+            this.rotation += 0.05;
 
-        // Bounds bounce with position clamping
-        const gameWidth = this.scene.scale.width;
-        if (this.x < this.radius) {
-            this.setX(this.radius);
-            this.setVelocityX(Math.abs(velocity.x) || 1);
-        } else if (this.x > gameWidth - this.radius) {
-            this.setX(gameWidth - this.radius);
-            this.setVelocityX(-Math.abs(velocity.x) || -1);
-        }
+            // Bounds bounce with position clamping
+            const gameWidth = this.scene.scale.width;
+            if (this.x < this.radius) {
+                this.setX(this.radius);
+                this.setVelocityX(Math.abs(velocity.x) || 1);
+            } else if (this.x > gameWidth - this.radius) {
+                this.setX(gameWidth - this.radius);
+                this.setVelocityX(-Math.abs(velocity.x) || -1);
+            }
 
-        if (this.y < this.radius) {
-            this.setY(this.radius);
-            this.setVelocityY(Math.abs(velocity.y) || 1);
+            if (this.y < this.radius) {
+                this.setY(this.radius);
+                this.setVelocityY(Math.abs(velocity.y) || 1);
+            }
+        } catch (e) {
+            console.error('❌ Ball update error:', e);
         }
     }
 }

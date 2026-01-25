@@ -129,38 +129,53 @@ export abstract class Brick extends Phaser.Physics.Matter.Sprite {
      * Destroy brick with animation
      */
     public destroy(): void {
-        if (this.isDestroyed) return;
+        try {
+            if (this.isDestroyed) return;
 
-        this.isDestroyed = true;
+            this.isDestroyed = true;
 
-        // Remove physics body immediately to prevent double hits
-        if (this.body) {
-            this.scene.matter.world.remove(this.body);
-        }
+            // Remove physics body immediately to prevent double hits
+            if (this.body) {
+                this.scene.matter.world.remove(this.body);
+            }
 
-        // Emit destroy event
-        this.scene.events.emit('brickDestroyed', {
-            brick: this,
-            type: this.type,
-            points: this.points,
-            x: this.x,
-            y: this.y,
-        });
+            // Emit destroy event
+            if (this.scene && this.scene.events) {
+                this.scene.events.emit('brickDestroyed', {
+                    brick: this,
+                    type: this.type,
+                    points: this.points,
+                    x: this.x,
+                    y: this.y,
+                });
+            }
 
-        // Destruction particles
-        this.createDestructionParticles();
+            // Destruction particles
+            this.createDestructionParticles();
 
-        // Fade out and remove
-        this.scene.tweens.add({
-            targets: this,
-            alpha: 0,
-            scaleX: 0.8,
-            scaleY: 0.8,
-            duration: 150,
-            onComplete: () => {
+            // Fade out and remove
+            if (this.scene && this.scene.tweens) {
+                this.scene.tweens.add({
+                    targets: this,
+                    alpha: 0,
+                    scaleX: 0.8,
+                    scaleY: 0.8,
+                    duration: 150,
+                    onComplete: () => {
+                        try {
+                            super.destroy();
+                        } catch (e) {
+                            console.warn('❌ Brick super.destroy error:', e);
+                        }
+                    },
+                });
+            } else {
                 super.destroy();
-            },
-        });
+            }
+        } catch (e) {
+            console.error('❌ Brick destroy error:', e);
+            try { super.destroy(); } catch (si) { }
+        }
     }
 
     /**
