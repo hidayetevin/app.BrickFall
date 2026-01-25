@@ -32,6 +32,9 @@ export class Paddle extends Phaser.Physics.Matter.Sprite {
         // Set dimensions
         this.setDisplaySize(paddleWidth, paddleHeight);
 
+        // Set blend mode to ADD to hide black background and enhance glow
+        this.setBlendMode(Phaser.BlendModes.ADD);
+
         // Add to scene
         scene.add.existing(this);
 

@@ -27,6 +27,9 @@ export class Ball extends Phaser.Physics.Matter.Sprite {
         // Set scale to match game radius
         this.setDisplaySize(ballRadius * 2, ballRadius * 2);
 
+        // Set blend mode to ADD to hide black background and enhance glow
+        this.setBlendMode(Phaser.BlendModes.ADD);
+
         // Add to scene
         scene.add.existing(this);
 
