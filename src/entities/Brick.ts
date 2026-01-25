@@ -43,6 +43,9 @@ export abstract class Brick extends Phaser.Physics.Matter.Sprite {
         // Add to scene
         scene.add.existing(this);
 
+        // Set blend mode to ADD to hide black background and enhance glow
+        this.setBlendMode(Phaser.BlendModes.ADD);
+
         // Setup physics
         this.setupPhysics();
     }
