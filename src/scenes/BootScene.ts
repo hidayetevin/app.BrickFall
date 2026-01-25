@@ -47,8 +47,17 @@ export class BootScene extends Phaser.Scene {
             percentText.destroy();
         });
 
-        // Assets will be loaded here in future
-        // For now, just simulate a small delay
+        // Assets loading
+        this.load.path = 'assets/images/';
+
+        // Bricks
+        this.load.spritesheet('neon_bricks', 'bricks/neon_bricks.png', {
+            frameWidth: 1024,
+            frameHeight: 204, // 1024 / 5 roughly
+        });
+
+        // Add a small delay for simulation if needed, or remove it as we are now loading real assets
+        // For now, let's keep the delay logic if you want but the loader will handle real assets
     }
 
     create(): void {

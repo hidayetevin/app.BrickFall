@@ -5,7 +5,7 @@ import { BrickType } from '../types/GameTypes';
  * Brick - Abstract base class for all brick types
  * Handles hit detection, health, and destruction
  */
-export abstract class Brick extends Phaser.GameObjects.Rectangle {
+export abstract class Brick extends Phaser.Physics.Matter.Sprite {
     public scene: Phaser.Scene;
     public declare body: MatterJS.BodyType;
 
@@ -14,8 +14,6 @@ export abstract class Brick extends Phaser.GameObjects.Rectangle {
     public maxHealth: number;
     public points: number;
     public isDestroyed: boolean = false;
-
-    protected originalColor: number;
 
     constructor(
         scene: Phaser.Scene,
@@ -27,15 +25,20 @@ export abstract class Brick extends Phaser.GameObjects.Rectangle {
         health: number,
         points: number
     ) {
-        const color = Brick.getColorForType(type, health);
-        super(scene, x, y, width, height, color);
+        // Use neon_bricks spritesheet
+        super(scene.matter.world, x, y, 'neon_bricks');
 
         this.scene = scene;
         this.type = type;
         this.health = health;
         this.maxHealth = health;
         this.points = points;
-        this.originalColor = color;
+
+        // Set frame based on type
+        this.setFrame(this.getFrameForType(type));
+
+        // Scale to match constant brick size
+        this.setDisplaySize(width, height);
 
         // Add to scene
         scene.add.existing(this);
@@ -48,8 +51,16 @@ export abstract class Brick extends Phaser.GameObjects.Rectangle {
      * Setup Matter.js physics body
      */
     protected setupPhysics(): void {
-        // Create static physics body (bricks don't fall)
-        this.scene.matter.add.gameObject(this, {
+        this.setStatic(true);
+        this.setFriction(0, 0);
+        this.setBounce(1);
+
+        // Ensure circular or rectangular body matches visual
+        this.setBody({
+            type: 'rectangle',
+            width: this.displayWidth,
+            height: this.displayHeight
+        }, {
             isStatic: true,
             friction: 0,
             frictionStatic: 0,
@@ -57,6 +68,19 @@ export abstract class Brick extends Phaser.GameObjects.Rectangle {
         });
 
         this.body = this.body as MatterJS.BodyType;
+    }
+
+    /**
+     * Get frame index from spritesheet based on brick type
+     */
+    private getFrameForType(type: BrickType): number {
+        const frameMap: Record<BrickType, number> = {
+            [BrickType.STANDARD]: 2, // Cyan/Blue
+            [BrickType.STRONG]: 1,   // Gold/Yellow
+            [BrickType.METAL]: 0,    // Red
+            [BrickType.MOVING]: 3,   // Pink/Magenta
+        };
+        return frameMap[type] || 0;
     }
 
     /**
@@ -82,16 +106,8 @@ export abstract class Brick extends Phaser.GameObjects.Rectangle {
      * Update brick appearance based on health
      */
     protected updateAppearance(): void {
-        // Darken brick as it takes damage
-        const healthPercent = this.health / this.maxHealth;
-        const darkenAmount = 1 - healthPercent * 0.3;
-
-        const r = ((this.originalColor >> 16) & 0xff) * darkenAmount;
-        const g = ((this.originalColor >> 8) & 0xff) * darkenAmount;
-        const b = (this.originalColor & 0xff) * darkenAmount;
-
-        const newColor = (Math.floor(r) << 16) | (Math.floor(g) << 8) | Math.floor(b);
-        this.setFillStyle(newColor);
+        // Visual damage feedback
+        this.setAlpha(0.5 + (this.health / this.maxHealth) * 0.5);
     }
 
     /**
@@ -103,9 +119,9 @@ export abstract class Brick extends Phaser.GameObjects.Rectangle {
      * Flash effect when hit
      */
     protected flash(color: number = 0xffffff, duration: number = 100): void {
-        this.setFillStyle(color);
+        this.setTint(color);
         this.scene.time.delayedCall(duration, () => {
-            this.updateAppearance();
+            this.clearTint();
         });
     }
 
@@ -152,7 +168,9 @@ export abstract class Brick extends Phaser.GameObjects.Rectangle {
      */
     protected createDestructionParticles(): void {
         const particleCount = 8;
-        const color = this.originalColor;
+        // Use tint or frame colors for particles if we had color data, 
+        // for now let's use a generic white/bright spark
+        const color = 0xffffff;
 
         for (let i = 0; i < particleCount; i++) {
             const angle = (Math.PI * 2 * i) / particleCount;
@@ -175,22 +193,6 @@ export abstract class Brick extends Phaser.GameObjects.Rectangle {
                 onComplete: () => particle.destroy(),
             });
         }
-    }
-
-    /**
-     * Get color for brick type and health
-     */
-    protected static getColorForType(type: BrickType, health: number): number {
-        const colors: Record<BrickType, number[]> = {
-            [BrickType.STANDARD]: [0xff6b6b, 0xfeca57, 0x48dbfb, 0xff9ff3, 0x54a0ff],
-            [BrickType.STRONG]: [0xff6348, 0xff4757, 0xd63031],
-            [BrickType.METAL]: [0x95a5a6, 0x7f8c8d, 0x636e72],
-            [BrickType.MOVING]: [0xf368e0, 0xee5a6f, 0xc44569],
-        };
-
-        const colorArray = colors[type];
-        const index = Math.min(health - 1, colorArray.length - 1);
-        return colorArray[index] || colorArray[0];
     }
 
     /**
