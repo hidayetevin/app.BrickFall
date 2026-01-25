@@ -15,40 +15,49 @@ export class GameOverScene extends Phaser.Scene {
     }
 
     create(data: { levelId: number, score: number }): void {
-        const { width, height } = this.cameras.main;
+        try {
+            const { width, height } = this.cameras.main;
+            const isSmallScreen = width < 400;
 
-        // Background overlay
-        this.add.rectangle(0, 0, width, height, 0x000000, 0.8).setOrigin(0);
+            // Background overlay
+            this.add.rectangle(0, 0, width, height, 0x000000, 0.8).setOrigin(0);
 
-        // Game Over text
-        this.add.text(width / 2, height * 0.25, 'GAME OVER', {
-            fontSize: '48px',
-            color: '#ff4444',
-            fontStyle: 'bold'
-        }).setOrigin(0.5);
+            // Game Over text
+            const titleSize = isSmallScreen ? '36px' : '48px';
+            this.add.text(width / 2, height * 0.25, 'GAME OVER', {
+                fontSize: titleSize,
+                color: '#ff4444',
+                fontStyle: 'bold'
+            }).setOrigin(0.5);
 
-        // Final Score
-        this.add.text(width / 2, height * 0.4, `SCORE: ${data.score}`, {
-            fontSize: '28px',
-            color: '#ffffff'
-        }).setOrigin(0.5);
+            // Final Score
+            this.add.text(width / 2, height * 0.4, `SCORE: ${data.score}`, {
+                fontSize: isSmallScreen ? '24px' : '28px',
+                color: '#ffffff'
+            }).setOrigin(0.5);
 
-        // Buttons
-        new Button(this, width / 2, height * 0.6, 'RETRY', 240, 60, COLORS.UI_PRIMARY, () => {
-            this.scene.start('Game', { levelId: data.levelId });
-        });
+            // Buttons
+            const btnW = Math.min(width * 0.75, 240);
+            const btnH = 60;
 
-        new Button(this, width / 2, height * 0.7, 'LEVEL SELECT', 240, 60, COLORS.UI_SECONDARY, () => {
-            this.scene.start('WorldMap');
-        });
+            new Button(this, width / 2, height * 0.6, 'RETRY', btnW, btnH, COLORS.UI_PRIMARY, () => {
+                try { this.scene.start('Game', { levelId: data.levelId }); } catch (e) { }
+            });
 
-        new Button(this, width / 2, height * 0.8, 'MAIN MENU', 240, 60, COLORS.UI_SECONDARY, () => {
-            this.scene.start('Menu');
-        });
+            new Button(this, width / 2, height * 0.7, 'LEVEL SELECT', btnW, btnH, COLORS.UI_SECONDARY, () => {
+                try { this.scene.start('WorldMap'); } catch (e) { }
+            });
 
-        // Show interstitial ad
-        this.time.delayedCall(500, () => {
-            this.adMob.showInterstitial();
-        });
+            new Button(this, width / 2, height * 0.8, 'MAIN MENU', btnW, btnH, COLORS.UI_SECONDARY, () => {
+                try { this.scene.start('Menu'); } catch (e) { }
+            });
+
+            // Show interstitial ad
+            this.time.delayedCall(500, () => {
+                try { this.adMob.showInterstitial(); } catch (e) { }
+            });
+        } catch (e) {
+            console.error('❌ GameOverScene error:', e);
+        }
     }
 }

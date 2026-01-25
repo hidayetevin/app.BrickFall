@@ -22,105 +22,119 @@ export class LevelCompleteScene extends Phaser.Scene {
     }
 
     create(data: { levelId: number, score: number, stars: number }): void {
-        const { width, height } = this.cameras.main;
+        try {
+            const { width, height } = this.cameras.main;
+            const isSmallScreen = width < 400;
 
-        // Background overlay
-        this.add.rectangle(0, 0, width, height, 0x000000, 0.8).setOrigin(0);
+            // Background overlay
+            this.add.rectangle(0, 0, width, height, 0x000000, 0.8).setOrigin(0);
 
-        // Victory text
-        this.add.text(width / 2, height * 0.2, 'LEVEL COMPLETE!', {
-            fontSize: '36px',
-            color: '#00ff88',
-            fontStyle: 'bold'
-        }).setOrigin(0.5);
-
-        // Score
-        this.add.text(width / 2, height * 0.3, `SCORE: ${data.score}`, {
-            fontSize: '24px',
-            color: '#ffffff'
-        }).setOrigin(0.5);
-
-        // Stars container background (Moved up)
-        const starsY = height * 0.40;
-        const panelWidth = 280;
-        const panelHeight = 130;
-
-        // Background panel for stars
-        const starsPanel = this.add.graphics();
-        starsPanel.fillStyle(0x1a1a2e, 0.6);
-        starsPanel.fillRoundedRect(
-            width / 2 - panelWidth / 2,
-            starsY - panelHeight / 2,
-            panelWidth,
-            panelHeight,
-            20
-        );
-
-        // Stars
-        for (let i = 0; i < 3; i++) {
-            const x = width / 2 + (i - 1) * 60;
-            const isEarned = i < data.stars;
-
-            const star = this.add.text(x, starsY, '⭐', {
-                fontSize: '48px'
+            // Victory text
+            const titleFontSize = isSmallScreen ? '28px' : '36px';
+            this.add.text(width / 2, height * 0.2, 'LEVEL COMPLETE!', {
+                fontSize: titleFontSize,
+                color: '#00ff88',
+                fontStyle: 'bold'
             }).setOrigin(0.5);
 
-            if (!isEarned) star.setAlpha(0.2);
+            // Score
+            this.add.text(width / 2, height * 0.3, `SCORE: ${data.score}`, {
+                fontSize: isSmallScreen ? '20px' : '24px',
+                color: '#ffffff'
+            }).setOrigin(0.5);
 
-            if (isEarned) {
-                this.tweens.add({
-                    targets: star,
-                    scale: { from: 0, to: 1 },
-                    delay: i * 200,
-                    duration: 500,
-                    ease: 'Back.easeOut'
-                });
+            // Stars container background
+            const starsY = height * 0.40;
+            const panelWidth = Math.min(width * 0.8, 280);
+            const panelHeight = isSmallScreen ? 110 : 130;
+
+            // Background panel for stars
+            const starsPanel = this.add.graphics();
+            starsPanel.fillStyle(0x1a1a2e, 0.6);
+            starsPanel.fillRoundedRect(
+                width / 2 - panelWidth / 2,
+                starsY - panelHeight / 2,
+                panelWidth,
+                panelHeight,
+                20
+            );
+
+            // Stars
+            const starSpacing = isSmallScreen ? 50 : 60;
+            const starFontSize = isSmallScreen ? '40px' : '48px';
+            for (let i = 0; i < 3; i++) {
+                const x = width / 2 + (i - 1) * starSpacing;
+                const isEarned = i < data.stars;
+
+                const star = this.add.text(x, starsY, '⭐', {
+                    fontSize: starFontSize
+                }).setOrigin(0.5);
+
+                if (!isEarned) star.setAlpha(0.2);
+
+                if (isEarned) {
+                    this.tweens.add({
+                        targets: star,
+                        scale: { from: 0, to: 1 },
+                        delay: i * 200,
+                        duration: 500,
+                        ease: 'Back.easeOut'
+                    });
+                }
             }
-        }
 
-        // 2X KAZAN BUTTON (Moved up)
-        const doubleBtn = new Button(this, width / 2, height * 0.58, '🎁 2X KAZAN', 240, 70, 0xffaa00, () => {
-            this.handleDoubleReward(data, doubleBtn);
-        });
-        doubleBtn.setAlpha(0);
-        this.tweens.add({
-            targets: doubleBtn,
-            alpha: 1,
-            duration: 300,
-            ease: 'Power2'
-        });
+            // Buttons
+            const btnW = Math.min(width * 0.75, 240);
+            const btnH = isSmallScreen ? 55 : 60;
 
-        // Other buttons (Moved up)
-        const nextBtn = new Button(this, width / 2, height * 0.68, 'NEXT LEVEL', 240, 60, COLORS.UI_PRIMARY, () => {
-            this.goToNextLevel(data.levelId);
-        });
-        nextBtn.setAlpha(0);
-
-        const selectBtn = new Button(this, width / 2, height * 0.78, 'LEVEL SELECT', 240, 60, COLORS.UI_SECONDARY, () => {
-            this.scene.start('WorldMap');
-        });
-        selectBtn.setAlpha(0);
-
-        const menuBtn = new Button(this, width / 2, height * 0.88, 'MAIN MENU', 240, 60, COLORS.UI_SECONDARY, () => {
-            this.scene.start('Menu');
-        });
-        menuBtn.setAlpha(0);
-
-        // Show other buttons after 2.5 seconds
-        this.time.delayedCall(2500, () => {
+            // 2X KAZAN BUTTON
+            const doubleBtn = new Button(this, width / 2, height * 0.58, '🎁 2X KAZAN', btnW, btnH + 10, 0xffaa00, () => {
+                try { this.handleDoubleReward(data, doubleBtn); } catch (e) { }
+            });
+            doubleBtn.setAlpha(0);
             this.tweens.add({
-                targets: [nextBtn, selectBtn, menuBtn],
+                targets: doubleBtn,
                 alpha: 1,
-                duration: 400,
+                duration: 300,
                 ease: 'Power2'
             });
-        });
 
-        // Show interstitial every 2 levels (only if double reward not claimed)
-        if (data.levelId % 2 === 0 && !this.doubleRewardClaimed) {
-            this.time.delayedCall(500, () => {
-                this.adMob.showInterstitial();
+            // Other buttons
+            const nextBtn = new Button(this, width / 2, height * 0.68, 'NEXT LEVEL', btnW, btnH, COLORS.UI_PRIMARY, () => {
+                try { this.goToNextLevel(data.levelId); } catch (e) { }
             });
+            nextBtn.setAlpha(0);
+
+            const selectBtn = new Button(this, width / 2, height * 0.78, 'LEVEL SELECT', btnW, btnH, COLORS.UI_SECONDARY, () => {
+                try { this.scene.start('WorldMap'); } catch (e) { }
+            });
+            selectBtn.setAlpha(0);
+
+            const menuBtn = new Button(this, width / 2, height * 0.88, 'MAIN MENU', btnW, btnH, COLORS.UI_SECONDARY, () => {
+                try { this.scene.start('Menu'); } catch (e) { }
+            });
+            menuBtn.setAlpha(0);
+
+            // Show other buttons after a delay
+            this.time.delayedCall(2000, () => {
+                try {
+                    this.tweens.add({
+                        targets: [nextBtn, selectBtn, menuBtn],
+                        alpha: 1,
+                        duration: 400,
+                        ease: 'Power2'
+                    });
+                } catch (e) { }
+            });
+
+            // Show interstitial ad
+            if (data.levelId % 2 === 0 && !this.doubleRewardClaimed) {
+                this.time.delayedCall(500, () => {
+                    try { this.adMob.showInterstitial(); } catch (e) { }
+                });
+            }
+        } catch (e) {
+            console.error('❌ LevelCompleteScene error:', e);
         }
     }
 
