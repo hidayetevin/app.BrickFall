@@ -67,7 +67,8 @@ export class LevelCompleteScene extends Phaser.Scene {
                 const isEarned = i < data.stars;
 
                 const star = this.add.text(x, starsY, '⭐', {
-                    fontSize: starFontSize
+                    fontSize: starFontSize,
+                    padding: { top: 10, bottom: 10 } // Add padding to prevent emoji clipping
                 }).setOrigin(0.5);
 
                 if (!isEarned) star.setAlpha(0.2);
