@@ -8,8 +8,8 @@ export const GAME_HEIGHT = 667;
 
 // Paddle configuration
 export const PADDLE_WIDTH = 100;
-export const PADDLE_HEIGHT = 15;
-export const PADDLE_SPEED = 480; // Increased by 20% for better responsiveness
+export const PADDLE_HEIGHT = 22;
+export const PADDLE_SPEED = 576; // Increased by 20% for better responsiveness
 export const PADDLE_Y_OFFSET = 100; // Distance from bottom (increased for banner ad clearance)
 
 // Ball configuration
