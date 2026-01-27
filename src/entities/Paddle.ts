@@ -132,15 +132,20 @@ export class Paddle extends Phaser.Physics.Matter.Sprite {
      * Extend paddle width (power-up)
      */
     public extend(multiplier: number = 1.3): void {
-        const newWidth = this.defaultWidth * multiplier;
-        this.currentWidth = newWidth;
+        try {
+            const newWidth = this.defaultWidth * multiplier;
+            this.currentWidth = newWidth;
 
-        // Update visual size
-        this.setDisplaySize(newWidth, this.displayHeight);
+            // Update visual size
+            this.setDisplaySize(newWidth, this.displayHeight);
 
-        // Update physics body
-        if (this.body) {
-            this.scene.matter.body.scale(this.body, multiplier, 1);
+            // Update physics body - Recreate body instead of scaling for stability
+            if (this.body) {
+                this.scene.matter.world.remove(this.body);
+                this.setupPhysics();
+            }
+        } catch (e) {
+            console.error('❌ Paddle extend error:', e);
         }
     }
 
@@ -189,30 +194,38 @@ export class Paddle extends Phaser.Physics.Matter.Sprite {
      * Update paddle position (smooth movement)
      */
     public update(): void {
-        // Smooth movement towards target
-        const dx = this.targetX - this.x;
-        const moveAmount = Math.abs(dx) > 1 ? dx * 0.15 : dx;
+        try {
+            if (!this.active || !this.scene || !this.scene.add) return;
 
-        const newX = this.x + moveAmount;
-        const gameWidth = this.scene.scale?.width || GAME_WIDTH;
-        const clampedX = Phaser.Math.Clamp(
-            newX,
-            this.currentWidth / 2,
-            gameWidth - this.currentWidth / 2
-        );
+            // Smooth movement towards target
+            const dx = this.targetX - this.x;
+            const moveAmount = Math.abs(dx) > 1 ? dx * 0.15 : dx;
 
-        this.setX(clampedX);
+            const newX = this.x + moveAmount;
+            const gameWidth = this.scene.scale?.width || GAME_WIDTH;
+            const clampedX = Phaser.Math.Clamp(
+                newX,
+                this.currentWidth / 2,
+                gameWidth - this.currentWidth / 2
+            );
 
-        // Update Matter.js body position
-        if (this.body) {
-            this.scene.matter.body.setPosition(this.body as any, { x: clampedX, y: this.y });
+            this.setX(clampedX);
+
+            // Update Matter.js body position
+            if (this.body && this.scene.matter && this.scene.matter.body) {
+                this.scene.matter.body.setPosition(this.body as any, { x: clampedX, y: this.y });
+            }
+
+            // Update attached balls positions
+            this.attachedBalls.forEach((ball, index) => {
+                if (ball && ball.active) {
+                    const ballOffset = (index - (this.attachedBalls.length - 1) / 2) * 20;
+                    ball.setPosition(this.x + ballOffset, this.y - 20);
+                }
+            });
+        } catch (e) {
+            console.error('❌ Paddle update error:', e);
         }
-
-        // Update attached balls positions
-        this.attachedBalls.forEach((ball, index) => {
-            const ballOffset = (index - (this.attachedBalls.length - 1) / 2) * 20;
-            ball.setPosition(this.x + ballOffset, this.y - 20);
-        });
     }
 
     /**

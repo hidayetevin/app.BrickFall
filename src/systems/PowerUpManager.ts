@@ -95,35 +95,45 @@ export class PowerUpManager {
      * Activate a power-up effect
      */
     private activatePowerUp(type: PowerUpType): void {
-        console.log(`✨ Activating power-up: ${type}`);
+        try {
+            // Safety check: ensure entities are still valid
+            if (!this.paddle || !this.paddle.active || !this.balls) {
+                console.warn('⚠️ Power-up activation skipped: Paddle or Balls group invalid');
+                return;
+            }
 
-        // Deactivate conflicting power-ups
-        this.deactivateConflicts(type);
+            console.log('✨ Activating power-up:', PowerUpType[type]);
 
-        switch (type) {
-            case PowerUpType.MULTI_BALL:
-                this.activateMultiBall();
-                break;
+            // Deactivate conflicting power-ups
+            this.deactivateConflicts(type);
 
-            case PowerUpType.EXTEND_PADDLE:
-                this.activateExtendPaddle();
-                break;
+            switch (type) {
+                case PowerUpType.MULTI_BALL:
+                    this.activateMultiBall();
+                    break;
 
-            case PowerUpType.SLOW_BALL:
-                this.activateSlowBall();
-                break;
+                case PowerUpType.EXTEND_PADDLE:
+                    this.activateExtendPaddle();
+                    break;
 
-            case PowerUpType.FAST_BALL:
-                this.activateFastBall();
-                break;
+                case PowerUpType.SLOW_BALL:
+                    this.activateSlowBall();
+                    break;
 
-            case PowerUpType.STICKY_PADDLE:
-                this.activateStickyPaddle();
-                break;
+                case PowerUpType.FAST_BALL:
+                    this.activateFastBall();
+                    break;
 
-            case PowerUpType.EXTRA_LIFE:
-                this.activateExtraLife();
-                break;
+                case PowerUpType.STICKY_PADDLE:
+                    this.activateStickyPaddle();
+                    break;
+
+                case PowerUpType.EXTRA_LIFE:
+                    this.activateExtraLife();
+                    break;
+            }
+        } catch (e) {
+            console.error('❌ PowerUp activation error:', e);
         }
     }
 
