@@ -19,14 +19,16 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     width: GAME_WIDTH,
     height: GAME_HEIGHT,
     backgroundColor: COLORS.BACKGROUND,
-    // @ts-ignore - resolution is missing in types but valid
-    resolution: window.devicePixelRatio || 1, // Use native device resolution for sharpness
+    // Use native device resolution for maximum sharpness
+    // @ts-ignore
+    resolution: window.devicePixelRatio || 1,
 
     scale: {
         mode: Phaser.Scale.RESIZE,
         parent: 'game-container',
         width: GAME_WIDTH,
         height: GAME_HEIGHT,
+        autoRound: true,
     },
 
     physics: {
@@ -50,9 +52,11 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
 
     render: {
         pixelArt: false,
-        antialias: true,
-        antialiasGL: true,
+        antialias: false,
+        antialiasGL: false,
         roundPixels: true, // Force integer pixel drawing for maximum sharpness
+        // @ts-ignore
+        resolution: window.devicePixelRatio || 1,
         powerPreference: 'high-performance',
         batchSize: 4096,
     },
