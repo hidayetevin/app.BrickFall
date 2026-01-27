@@ -116,11 +116,6 @@ export class GameScene extends Phaser.Scene {
             fontStyle: 'bold'
         }).setOrigin(1, 0);
 
-        this.add.text(width / 2, 20, this.levelConfig.name, {
-            fontSize: '18px',
-            color: '#00ff88',
-            fontStyle: 'bold'
-        }).setOrigin(0.5, 0);
 
         const launchText = this.add.text(width / 2, height / 2 + 100, 'Tap to Launch', {
             fontSize: '24px',
