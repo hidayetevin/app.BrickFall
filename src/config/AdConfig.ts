@@ -3,26 +3,26 @@
  */
 
 // Toggle between test and production ads
-export const USE_TEST_ADS = true;
+export const USE_TEST_ADS = false;
 
 // Banner Ad IDs
 export const BANNER_AD_ID = {
     // Use test IDs during development
     TEST: 'ca-app-pub-3940256099942544/6300978111',
     // Replace with your actual AdMob IDs before production
-    ANDROID: 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX',
+    ANDROID: 'ca-app-pub-4190858087915294/5570806007',
 };
 
 // Interstitial Ad IDs
 export const INTERSTITIAL_AD_ID = {
     TEST: 'ca-app-pub-3940256099942544/1033173712',
-    ANDROID: 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX',
+    ANDROID: 'ca-app-pub-4190858087915294/2848040360',
 };
 
 // Rewarded Ad IDs (for future use)
 export const REWARDED_AD_ID = {
     TEST: 'ca-app-pub-3940256099942544/5224354917',
-    ANDROID: 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX',
+    ANDROID: 'ca-app-pub-4190858087915294/8085288709',
 };
 
 // Ad display settings

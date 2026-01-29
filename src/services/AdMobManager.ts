@@ -1,5 +1,6 @@
 import { AdMob, BannerAdOptions, BannerAdSize, BannerAdPosition, RewardAdPluginEvents, InterstitialAdPluginEvents, AdMobRewardItem } from '@capacitor-community/admob';
 import { Capacitor } from '@capacitor/core';
+import { getBannerAdId, getInterstitialAdId, getRewardedAdId, USE_TEST_ADS } from '@config/AdConfig';
 
 /**
  * AdMobManager - Centralized AdMob ad management
@@ -13,13 +14,6 @@ export class AdMobManager {
     private readonly INTERSTITIAL_COOLDOWN = 30000; // 30 seconds
     private interstitialReady: boolean = false;
     private rewardedReady: boolean = false;
-
-    // Test IDs (replace with your real IDs in production)
-    private readonly ADS = {
-        banner: 'ca-app-pub-3940256099942544/6300978111',
-        interstitial: 'ca-app-pub-3940256099942544/1033173712',
-        rewarded: 'ca-app-pub-3940256099942544/5224354917'
-    };
 
     private constructor() {
         // Listen for ad dismissal to fix layout issues
@@ -74,12 +68,12 @@ export class AdMobManager {
 
         try {
             await AdMob.initialize({
-                testingDevices: ['YOUR_DEVICE_ID_HERE'],
-                initializeForTesting: true
+                testingDevices: ['YOUR_DEVICE_ID_HERE'], // You can keep this or manage via config if needed
+                initializeForTesting: USE_TEST_ADS
             });
 
             this.isInitialized = true;
-            console.log('✅ AdMob initialized successfully');
+            console.log(`✅ AdMob initialized successfully (Test Mode: ${USE_TEST_ADS})`);
 
             // Preload ads
             this.prepareInterstitial();
@@ -97,11 +91,11 @@ export class AdMobManager {
 
         try {
             const options: BannerAdOptions = {
-                adId: this.ADS.banner,
+                adId: getBannerAdId(),
                 adSize: BannerAdSize.ADAPTIVE_BANNER,
                 position: BannerAdPosition.BOTTOM_CENTER,
                 margin: 0,
-                isTesting: true
+                isTesting: USE_TEST_ADS
             };
 
             await AdMob.showBanner(options);
@@ -133,8 +127,8 @@ export class AdMobManager {
     private async prepareInterstitial(): Promise<void> {
         try {
             await AdMob.prepareInterstitial({
-                adId: this.ADS.interstitial,
-                isTesting: true
+                adId: getInterstitialAdId(),
+                isTesting: USE_TEST_ADS
             });
             this.interstitialReady = true;
             console.log('📺 Interstitial ad prepared');
@@ -185,8 +179,8 @@ export class AdMobManager {
     private async prepareRewarded(): Promise<void> {
         try {
             await AdMob.prepareRewardVideoAd({
-                adId: this.ADS.rewarded,
-                isTesting: true
+                adId: getRewardedAdId(),
+                isTesting: USE_TEST_ADS
             });
             this.rewardedReady = true;
             console.log('🎁 Rewarded ad prepared');
