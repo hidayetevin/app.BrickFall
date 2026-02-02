@@ -9,7 +9,7 @@ import { AdMobManager } from '../services/AdMobManager';
 import { LevelConfig, LevelStats } from '../types/LevelTypes';
 import { GameState } from '../types/GameTypes';
 import { Brick } from '@entities/Brick';
-import { COLORS, INITIAL_LIVES, PADDLE_Y_OFFSET, BALL_SPEED_INCREMENT } from '@config/Constants';
+import { COLORS, INITIAL_LIVES, MAX_LIVES, PADDLE_Y_OFFSET, BALL_SPEED_INCREMENT } from '@config/Constants';
 
 /**
  * GameScene - Main gameplay scene
@@ -184,10 +184,17 @@ export class GameScene extends Phaser.Scene {
             }
         });
 
+
         this.events.on('addLife', () => {
             try {
-                this.lives++;
-                this.updateUI();
+                // Don't exceed maximum lives
+                if (this.lives < MAX_LIVES) {
+                    this.lives++;
+                    this.updateUI();
+                    console.log(`❤️ Life added! Lives: ${this.lives}/${MAX_LIVES}`);
+                } else {
+                    console.log(`⚠️ Already at maximum lives (${MAX_LIVES})`);
+                }
             } catch (e) {
                 console.error('❌ Error adding life:', e);
             }

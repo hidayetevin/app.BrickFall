@@ -9,6 +9,7 @@ import {
     POWER_UP_SPEED_MULTIPLIER,
     POWER_UP_FAST_MULTIPLIER,
     POWER_UP_DROP_CHANCE,
+    MAX_LIVES,
 } from '@config/Constants';
 
 /**
@@ -57,15 +58,21 @@ export class PowerUpManager {
     /**
      * Get random power-up type with weighted probabilities
      * Total weights = 1.00 (100%)
+     * Checks current lives to avoid spawning EXTRA_LIFE when at max
      */
     private getRandomPowerUpType(): PowerUpType {
+        // Get current lives from GameScene (if available)
+        const gameScene = this.scene as any;
+        const currentLives = gameScene.lives || 0;
+        const maxLives = gameScene.constructor.name === 'GameScene' ? MAX_LIVES : 5;
+
         const weights = {
             [PowerUpType.MULTI_BALL]: 0.15,      // 15% - Same
             [PowerUpType.EXTEND_PADDLE]: 0.35,   // 35% - Most common (was 0.25)
             [PowerUpType.SLOW_BALL]: 0.20,       // 20% - Same
             [PowerUpType.FAST_BALL]: 0.15,       // 15% - Increased (was 0.10)
             [PowerUpType.STICKY_PADDLE]: 0.10,   // 10% - Reduced (was 0.15)
-            [PowerUpType.EXTRA_LIFE]: 0.05,      // 5% - RARE! (was 0.15)
+            [PowerUpType.EXTRA_LIFE]: currentLives >= maxLives ? 0 : 0.05, // 5% - RARE! (0% if at max lives)
         };
 
         const total = Object.values(weights).reduce((sum, weight) => sum + weight, 0);
