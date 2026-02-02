@@ -60,7 +60,9 @@ export class Button extends Phaser.GameObjects.Container {
     }
 
     public setEnabled(enabled: boolean): void {
-        this.background.input?.enabled === enabled;
+        if (this.background.input) {
+            this.background.input.enabled = enabled;
+        }
         this.setAlpha(enabled ? 1 : 0.5);
     }
 }

@@ -63,7 +63,7 @@ export class MenuScene extends Phaser.Scene {
 
             // Settings button
             new Button(this, width / 2, height * 0.7, 'SETTINGS', btnW, btnH, COLORS.UI_SECONDARY, () => {
-                try { /* Settings scene placeholder */ } catch (e) { }
+                try { this.scene.start('Settings'); } catch (e) { }
             });
 
             // Version/Credit

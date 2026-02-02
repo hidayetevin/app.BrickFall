@@ -218,8 +218,7 @@ export class AdMobManager {
         return new Promise((resolve) => {
             let rewarded = false;
             let resolved = false;
-            let rewardListener: any;
-            let dismissListener: any;
+            let listeners: any[] = [];
             let timeoutId: any;
 
             // Cleanup function
@@ -228,31 +227,36 @@ export class AdMobManager {
                 resolved = true;
 
                 if (timeoutId) clearTimeout(timeoutId);
-                if (rewardListener) rewardListener.remove();
-                if (dismissListener) dismissListener.remove();
+                listeners.forEach(l => l.remove());
+                listeners = [];
             };
 
-            // Timeout safety (15 seconds)
+            // Timeout safety (10 seconds - reduced from 15)
             timeoutId = setTimeout(() => {
                 console.log('⏱️ Rewarded ad timeout - forcing resolve');
                 cleanup();
                 resolve(rewarded);
-            }, 15000);
+            }, 10000);
 
             // Listen for reward event
-            const handleReward = (reward: AdMobRewardItem) => {
+            listeners.push(AdMob.addListener(RewardAdPluginEvents.Rewarded, (reward: AdMobRewardItem) => {
                 console.log('🎁 User earned reward:', reward);
                 rewarded = true;
-            };
-            rewardListener = AdMob.addListener(RewardAdPluginEvents.Rewarded, handleReward);
+            }));
 
-            // Listen for dismissed event (user closes ad early or after watching)
-            const handleDismissed = () => {
+            // Listen for dismissed event
+            listeners.push(AdMob.addListener(RewardAdPluginEvents.Dismissed, () => {
                 console.log('👋 Rewarded ad dismissed');
                 cleanup();
                 resolve(rewarded);
-            };
-            dismissListener = AdMob.addListener(RewardAdPluginEvents.Dismissed, handleDismissed);
+            }));
+
+            // Listen for failed to show
+            listeners.push(AdMob.addListener(RewardAdPluginEvents.FailedToShow, (error) => {
+                console.error('❌ Rewarded ad failed to show:', error);
+                cleanup();
+                resolve(false);
+            }));
 
             // Show ad
             AdMob.showRewardVideoAd()
@@ -263,7 +267,7 @@ export class AdMobManager {
                     setTimeout(() => this.prepareRewarded(), 1000);
                 })
                 .catch((error) => {
-                    console.error('❌ Show rewarded error:', error);
+                    console.error('❌ Show rewarded error inside promise:', error);
                     cleanup();
                     this.rewardedReady = false;
                     resolve(false);

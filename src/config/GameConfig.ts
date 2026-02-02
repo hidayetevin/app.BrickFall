@@ -8,6 +8,7 @@ import { WorldMapScene } from '@scenes/WorldMapScene';
 import { GameScene } from '@scenes/GameScene';
 import { LevelCompleteScene } from '@scenes/LevelCompleteScene';
 import { GameOverScene } from '@scenes/GameOverScene';
+import { SettingsScene } from '@scenes/SettingsScene';
 import { TestScene } from '@scenes/TestScene';
 
 /**
@@ -47,6 +48,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
         GameScene,
         LevelCompleteScene,
         GameOverScene,
+        SettingsScene,
         TestScene // Keep Test for now just in case
     ],
 

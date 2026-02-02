@@ -16,6 +16,7 @@ export class Paddle extends Phaser.Physics.Matter.Sprite {
 
     private targetX: number;
     private moveSpeed: number;
+    private sensitivity: number = 5;
 
     constructor(scene: Phaser.Scene, x: number, y: number, width?: number, height?: number) {
         const paddleWidth = width || PADDLE_WIDTH;
@@ -27,7 +28,11 @@ export class Paddle extends Phaser.Physics.Matter.Sprite {
         this.defaultWidth = paddleWidth;
         this.currentWidth = paddleWidth;
         this.targetX = x;
-        this.moveSpeed = PADDLE_SPEED;
+
+        // Load sensitivity from storage
+        const storage = (scene as any).storage || { getSettings: () => ({ sensitivity: 5 }) };
+        this.sensitivity = storage.getSettings().sensitivity;
+        this.moveSpeed = PADDLE_SPEED * (0.5 + this.sensitivity / 5);
 
         // Set dimensions
         this.setDisplaySize(paddleWidth, paddleHeight);
@@ -191,6 +196,19 @@ export class Paddle extends Phaser.Physics.Matter.Sprite {
     }
 
     /**
+     * Add movement based on device tilt (gamma/beta)
+     */
+    public addTiltMovement(tiltDelta: number): void {
+        // Multiplier based on sensitivity (scale 1-10)
+        const tiltSensitivity = 0.5 + (this.sensitivity / 5);
+        this.targetX = Phaser.Math.Clamp(
+            this.targetX + tiltDelta * 10 * tiltSensitivity,
+            this.currentWidth / 2,
+            GAME_WIDTH - this.currentWidth / 2
+        );
+    }
+
+    /**
      * Update paddle position (smooth movement)
      */
     public update(): void {
@@ -198,8 +216,11 @@ export class Paddle extends Phaser.Physics.Matter.Sprite {
             if (!this.active || !this.scene || !this.scene.add) return;
 
             // Smooth movement towards target
+            // Sensitivity impacts how fast it snaps to target
+            // Range 0.1 to 0.4
+            const lerpFactor = 0.1 + (this.sensitivity / 10) * 0.3;
             const dx = this.targetX - this.x;
-            const moveAmount = Math.abs(dx) > 1 ? dx * 0.15 : dx;
+            const moveAmount = Math.abs(dx) > 1 ? dx * lerpFactor : dx;
 
             const newX = this.x + moveAmount;
             const gameWidth = this.scene.scale?.width || GAME_WIDTH;

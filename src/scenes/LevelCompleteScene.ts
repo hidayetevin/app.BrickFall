@@ -88,19 +88,7 @@ export class LevelCompleteScene extends Phaser.Scene {
             const btnW = Math.min(width * 0.75, 240);
             const btnH = isSmallScreen ? 55 : 60;
 
-            // 2X KAZAN BUTTON
-            const doubleBtn = new Button(this, width / 2, height * 0.58, '🎁 2X KAZAN', btnW, btnH + 10, 0xffaa00, () => {
-                try { this.handleDoubleReward(data, doubleBtn); } catch (e) { }
-            });
-            doubleBtn.setAlpha(0);
-            this.tweens.add({
-                targets: doubleBtn,
-                alpha: 1,
-                duration: 300,
-                ease: 'Power2'
-            });
-
-            // Other buttons
+            // Other buttons (needed for handleDoubleReward)
             const nextBtn = new Button(this, width / 2, height * 0.68, 'NEXT LEVEL', btnW, btnH, COLORS.UI_PRIMARY, () => {
                 try { this.goToNextLevel(data.levelId); } catch (e) { }
             });
@@ -115,6 +103,20 @@ export class LevelCompleteScene extends Phaser.Scene {
                 try { this.scene.start('Menu'); } catch (e) { }
             });
             menuBtn.setAlpha(0);
+
+            // 2X KAZAN BUTTON
+            const otherButtons = [nextBtn, selectBtn, menuBtn];
+            const doubleBtn = new Button(this, width / 2, height * 0.58, '🎁 2X KAZAN', btnW, btnH + 10, 0xffaa00, () => {
+                try { this.handleDoubleReward(data, doubleBtn, otherButtons); } catch (e) { }
+            });
+            doubleBtn.setAlpha(0);
+
+            this.tweens.add({
+                targets: doubleBtn,
+                alpha: 1,
+                duration: 300,
+                ease: 'Power2'
+            });
 
             // Show other buttons after a delay
             this.time.delayedCall(2000, () => {
@@ -139,16 +141,13 @@ export class LevelCompleteScene extends Phaser.Scene {
         }
     }
 
-    private async handleDoubleReward(data: { levelId: number, score: number, stars: number }, button: Button): Promise<void> {
+    private async handleDoubleReward(data: { levelId: number, score: number, stars: number }, button: Button, otherButtons: Button[]): Promise<void> {
         // Prevent multiple clicks
-        if (this.doubleRewardClaimed) {
-            console.log('⚠️ Double reward already claimed');
-            return;
-        }
+        if (this.doubleRewardClaimed) return;
 
-        // Disable button
-        button.setAlpha(0.5);
-        button.setInteractive(false);
+        // Disable ALL buttons
+        button.setEnabled(false);
+        otherButtons.forEach(btn => btn.setEnabled(false));
 
         // Show loading indicator
         const { width, height } = this.cameras.main;
@@ -156,15 +155,12 @@ export class LevelCompleteScene extends Phaser.Scene {
             fontSize: '18px',
             color: '#ffaa00',
             fontStyle: 'bold'
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(2000);
 
         try {
-            // Set a safety timeout (30 seconds total)
+            // Set a safety timeout (15 seconds total)
             const timeoutPromise = new Promise<boolean>((resolve) => {
-                setTimeout(() => {
-                    console.log('⏱️ Double reward timeout - cancelling');
-                    resolve(false);
-                }, 30000);
+                setTimeout(() => resolve(false), 15000);
             });
 
             // Race between ad and timeout
@@ -178,22 +174,13 @@ export class LevelCompleteScene extends Phaser.Scene {
 
             if (rewarded) {
                 this.doubleRewardClaimed = true;
-
-                // Calculate double stars
-                const doubleStars = Math.min(data.stars * 2, 3); // Max 3 stars
-
-                // Save double stars directly to storage
+                const doubleStars = Math.min(data.stars * 2, 3);
                 this.storage.saveLevelScore(data.levelId, data.score, doubleStars);
 
-                console.log(`✅ Double reward! ${data.stars} → ${doubleStars} stars`);
-
                 // Show success feedback
-                const successText = this.add.text(width / 2, height * 0.6,
-                    `+${data.stars} BONUS ⭐`, {
-                    fontSize: '28px',
-                    color: '#ffaa00',
-                    fontStyle: 'bold'
-                }).setOrigin(0.5).setAlpha(0);
+                const successText = this.add.text(width / 2, height * 0.6, `+${data.stars} BONUS ⭐`, {
+                    fontSize: '28px', color: '#ffaa00', fontStyle: 'bold'
+                }).setOrigin(0.5).setAlpha(0).setDepth(2000);
 
                 this.tweens.add({
                     targets: successText,
@@ -202,66 +189,32 @@ export class LevelCompleteScene extends Phaser.Scene {
                     duration: 500,
                     ease: 'Back.easeOut',
                     onComplete: () => {
-                        // Auto go to next level after 1 second
-                        this.time.delayedCall(1000, () => {
-                            this.goToNextLevel(data.levelId);
-                        });
+                        this.time.delayedCall(1000, () => this.goToNextLevel(data.levelId));
                     }
                 });
             } else {
-                // Ad failed or user closed early - show feedback
-                console.log('❌ Rewarded ad not completed');
+                // Ad failed or cancelled
+                const errorText = this.add.text(width / 2, height * 0.52, 'Ad not completed', {
+                    fontSize: '16px', color: '#ff6666'
+                }).setOrigin(0.5).setDepth(2000);
 
-                // Show feedback message
-                const errorText = this.add.text(width / 2, height * 0.52,
-                    'Ad not available or cancelled', {
-                    fontSize: '16px',
-                    color: '#ff6666'
-                }).setOrigin(0.5);
-
-                // Fade out error message
                 this.time.delayedCall(2000, () => {
                     this.tweens.add({
-                        targets: errorText,
-                        alpha: 0,
-                        duration: 300,
-                        onComplete: () => errorText.destroy()
+                        targets: errorText, alpha: 0, duration: 300,
+                        onComplete: () => {
+                            errorText.destroy();
+                            // Re-enable buttons only after error message is gone
+                            button.setEnabled(true);
+                            otherButtons.forEach(btn => btn.setEnabled(true));
+                        }
                     });
                 });
-
-                // Re-enable button
-                button.setAlpha(1);
-                button.setInteractive(true);
             }
         } catch (error) {
-            // Unexpected error - cleanup and re-enable
-            console.error('❌ Unexpected error in handleDoubleReward:', error);
-
-            if (loadingText && loadingText.active) {
-                loadingText.destroy();
-            }
-
-            // Show error feedback
-            const errorText = this.add.text(width / 2, height * 0.52,
-                'An error occurred', {
-                fontSize: '16px',
-                color: '#ff6666'
-            }).setOrigin(0.5);
-
-            this.time.delayedCall(2000, () => {
-                if (errorText && errorText.active) {
-                    this.tweens.add({
-                        targets: errorText,
-                        alpha: 0,
-                        duration: 300,
-                        onComplete: () => errorText.destroy()
-                    });
-                }
-            });
-
-            // Re-enable button
-            button.setAlpha(1);
-            button.setInteractive(true);
+            console.error('❌ Reward error:', error);
+            if (loadingText) loadingText.destroy();
+            button.setEnabled(true);
+            otherButtons.forEach(btn => btn.setEnabled(true));
         }
     }
 

@@ -5,6 +5,7 @@ import { BrickManager } from '@systems/BrickManager';
 import { PowerUpManager } from '@systems/PowerUpManager';
 import { LevelManager } from '@systems/LevelManager';
 import { ProgressionManager } from '@systems/ProgressionManager';
+import { StorageManager } from '@systems/StorageManager';
 import { AdMobManager } from '../services/AdMobManager';
 import { LevelConfig, LevelStats } from '../types/LevelTypes';
 import { GameState } from '../types/GameTypes';
@@ -17,6 +18,7 @@ import { COLORS, INITIAL_LIVES, MAX_LIVES, PADDLE_Y_OFFSET, BALL_SPEED_INCREMENT
 export class GameScene extends Phaser.Scene {
     private levelManager: LevelManager;
     private progressionManager: ProgressionManager;
+    private storage: StorageManager;
     private adMob: AdMobManager;
     private brickManager!: BrickManager;
     private powerUpManager!: PowerUpManager;
@@ -43,6 +45,7 @@ export class GameScene extends Phaser.Scene {
         super({ key: 'Game' });
         this.levelManager = LevelManager.getInstance();
         this.progressionManager = ProgressionManager.getInstance();
+        this.storage = StorageManager.getInstance();
         this.adMob = AdMobManager.getInstance();
     }
 
@@ -85,7 +88,38 @@ export class GameScene extends Phaser.Scene {
         // Setup Collision Detection
         this.setupCollisions();
 
+        // Setup Tilt Control
+        this.setupTiltControl();
+
         this.gameState = 'IDLE';
+    }
+
+    private setupTiltControl(): void {
+        const settings = this.storage.getSettings();
+        if (!settings.tiltControlEnabled) return;
+
+        console.log('📱 Tilt control enabled');
+
+        const handleOrientation = (event: DeviceOrientationEvent) => {
+            if (this.gameState !== 'PLAYING' && this.gameState !== 'IDLE') return;
+
+            // gamma is the left-to-right tilt in degrees, where right is positive
+            const tilt = event.gamma;
+            if (tilt !== null) {
+                // Deadzone of 2 degrees
+                if (Math.abs(tilt) > 2) {
+                    const normalizedTilt = tilt / 90; // -1 to 1
+                    this.paddle.addTiltMovement(normalizedTilt);
+                }
+            }
+        };
+
+        window.addEventListener('deviceorientation', handleOrientation);
+
+        // Cleanup on scene shutdown
+        this.events.once('shutdown', () => {
+            window.removeEventListener('deviceorientation', handleOrientation);
+        });
     }
 
     private setupPaddle(): void {

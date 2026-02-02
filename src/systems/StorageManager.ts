@@ -40,6 +40,8 @@ export class StorageManager {
                 hapticEnabled: true,
                 darkMode: true,
                 particlesEnabled: true,
+                tiltControlEnabled: false,
+                sensitivity: 5,
             },
         };
     }
