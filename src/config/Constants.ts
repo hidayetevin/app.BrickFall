@@ -10,7 +10,7 @@ export const GAME_HEIGHT = 667;
 export const PADDLE_WIDTH = 100;
 export const PADDLE_HEIGHT = 22;
 export const PADDLE_SPEED = 576; // Increased by 20% for better responsiveness
-export const PADDLE_Y_OFFSET = 120; // Distance from bottom (increased for better banner ad clearance and user request)
+export const PADDLE_Y_OFFSET = 150; // Distance from bottom (increased so it's not hidden by finger)
 
 // Ball configuration
 export const BALL_RADIUS = 8;
