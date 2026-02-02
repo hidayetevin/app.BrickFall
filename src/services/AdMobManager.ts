@@ -194,44 +194,77 @@ export class AdMobManager {
      * Show rewarded ad and return whether user watched it
      */
     public async showRewarded(): Promise<boolean> {
-        if (!this.isInitialized) return false;
+        if (!this.isInitialized) {
+            console.log('⚠️ AdMob not initialized');
+            return false;
+        }
 
         if (!this.rewardedReady) {
-            console.log('⚠️ Rewarded ad not ready');
-            await this.prepareRewarded();
-            return false;
+            console.log('⚠️ Rewarded ad not ready, preparing...');
+            try {
+                await this.prepareRewarded();
+                // Wait a bit for ad to be ready
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                if (!this.rewardedReady) {
+                    console.log('❌ Rewarded ad still not ready after prepare');
+                    return false;
+                }
+            } catch (error) {
+                console.error('❌ Failed to prepare rewarded ad:', error);
+                return false;
+            }
         }
 
         return new Promise((resolve) => {
             let rewarded = false;
-            let listenerHandle: any;
+            let resolved = false;
+            let rewardListener: any;
+            let dismissListener: any;
+            let timeoutId: any;
 
-            // Listen for reward
+            // Cleanup function
+            const cleanup = () => {
+                if (resolved) return;
+                resolved = true;
+
+                if (timeoutId) clearTimeout(timeoutId);
+                if (rewardListener) rewardListener.remove();
+                if (dismissListener) dismissListener.remove();
+            };
+
+            // Timeout safety (15 seconds)
+            timeoutId = setTimeout(() => {
+                console.log('⏱️ Rewarded ad timeout - forcing resolve');
+                cleanup();
+                resolve(rewarded);
+            }, 15000);
+
+            // Listen for reward event
             const handleReward = (reward: AdMobRewardItem) => {
                 console.log('🎁 User earned reward:', reward);
                 rewarded = true;
             };
-            listenerHandle = AdMob.addListener(RewardAdPluginEvents.Rewarded, handleReward);
+            rewardListener = AdMob.addListener(RewardAdPluginEvents.Rewarded, handleReward);
+
+            // Listen for dismissed event (user closes ad early or after watching)
+            const handleDismissed = () => {
+                console.log('👋 Rewarded ad dismissed');
+                cleanup();
+                resolve(rewarded);
+            };
+            dismissListener = AdMob.addListener(RewardAdPluginEvents.Dismissed, handleDismissed);
 
             // Show ad
             AdMob.showRewardVideoAd()
                 .then(() => {
                     this.rewardedReady = false;
+                    console.log('📺 Rewarded ad show started');
+                    // Prepare next ad
                     setTimeout(() => this.prepareRewarded(), 1000);
-
-                    // Wait a bit for reward event
-                    setTimeout(() => {
-                        if (listenerHandle) {
-                            listenerHandle.remove();
-                        }
-                        resolve(rewarded);
-                    }, 500);
                 })
                 .catch((error) => {
-                    console.error('Show rewarded error:', error);
-                    if (listenerHandle) {
-                        listenerHandle.remove();
-                    }
+                    console.error('❌ Show rewarded error:', error);
+                    cleanup();
                     this.rewardedReady = false;
                     resolve(false);
                 });

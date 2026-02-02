@@ -140,50 +140,128 @@ export class LevelCompleteScene extends Phaser.Scene {
     }
 
     private async handleDoubleReward(data: { levelId: number, score: number, stars: number }, button: Button): Promise<void> {
+        // Prevent multiple clicks
+        if (this.doubleRewardClaimed) {
+            console.log('⚠️ Double reward already claimed');
+            return;
+        }
+
         // Disable button
         button.setAlpha(0.5);
         button.setInteractive(false);
 
-        // Show rewarded ad
-        const rewarded = await this.adMob.showRewarded();
+        // Show loading indicator
+        const { width, height } = this.cameras.main;
+        const loadingText = this.add.text(width / 2, height * 0.52, 'Loading ad...', {
+            fontSize: '18px',
+            color: '#ffaa00',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
 
-        if (rewarded) {
-            this.doubleRewardClaimed = true;
+        try {
+            // Set a safety timeout (30 seconds total)
+            const timeoutPromise = new Promise<boolean>((resolve) => {
+                setTimeout(() => {
+                    console.log('⏱️ Double reward timeout - cancelling');
+                    resolve(false);
+                }, 30000);
+            });
 
-            // Calculate double stars
-            const doubleStars = Math.min(data.stars * 2, 3); // Max 3 stars
+            // Race between ad and timeout
+            const rewarded = await Promise.race([
+                this.adMob.showRewarded(),
+                timeoutPromise
+            ]);
 
-            // Save double stars directly to storage
-            this.storage.saveLevelScore(data.levelId, data.score, doubleStars);
+            // Remove loading text
+            loadingText.destroy();
 
-            console.log(`✅ Double reward! ${data.stars} → ${doubleStars} stars`);
+            if (rewarded) {
+                this.doubleRewardClaimed = true;
 
-            // Show success feedback
-            const successText = this.add.text(this.cameras.main.width / 2, this.cameras.main.height * 0.6,
-                `+${data.stars} BONUS ⭐`, {
-                fontSize: '28px',
-                color: '#ffaa00',
-                fontStyle: 'bold'
-            }).setOrigin(0.5).setAlpha(0);
+                // Calculate double stars
+                const doubleStars = Math.min(data.stars * 2, 3); // Max 3 stars
 
-            this.tweens.add({
-                targets: successText,
-                alpha: 1,
-                y: successText.y - 20,
-                duration: 500,
-                ease: 'Back.easeOut',
-                onComplete: () => {
-                    // Auto go to next level after 1 second
-                    this.time.delayedCall(1000, () => {
-                        this.goToNextLevel(data.levelId);
+                // Save double stars directly to storage
+                this.storage.saveLevelScore(data.levelId, data.score, doubleStars);
+
+                console.log(`✅ Double reward! ${data.stars} → ${doubleStars} stars`);
+
+                // Show success feedback
+                const successText = this.add.text(width / 2, height * 0.6,
+                    `+${data.stars} BONUS ⭐`, {
+                    fontSize: '28px',
+                    color: '#ffaa00',
+                    fontStyle: 'bold'
+                }).setOrigin(0.5).setAlpha(0);
+
+                this.tweens.add({
+                    targets: successText,
+                    alpha: 1,
+                    y: successText.y - 20,
+                    duration: 500,
+                    ease: 'Back.easeOut',
+                    onComplete: () => {
+                        // Auto go to next level after 1 second
+                        this.time.delayedCall(1000, () => {
+                            this.goToNextLevel(data.levelId);
+                        });
+                    }
+                });
+            } else {
+                // Ad failed or user closed early - show feedback
+                console.log('❌ Rewarded ad not completed');
+
+                // Show feedback message
+                const errorText = this.add.text(width / 2, height * 0.52,
+                    'Ad not available or cancelled', {
+                    fontSize: '16px',
+                    color: '#ff6666'
+                }).setOrigin(0.5);
+
+                // Fade out error message
+                this.time.delayedCall(2000, () => {
+                    this.tweens.add({
+                        targets: errorText,
+                        alpha: 0,
+                        duration: 300,
+                        onComplete: () => errorText.destroy()
+                    });
+                });
+
+                // Re-enable button
+                button.setAlpha(1);
+                button.setInteractive(true);
+            }
+        } catch (error) {
+            // Unexpected error - cleanup and re-enable
+            console.error('❌ Unexpected error in handleDoubleReward:', error);
+
+            if (loadingText && loadingText.active) {
+                loadingText.destroy();
+            }
+
+            // Show error feedback
+            const errorText = this.add.text(width / 2, height * 0.52,
+                'An error occurred', {
+                fontSize: '16px',
+                color: '#ff6666'
+            }).setOrigin(0.5);
+
+            this.time.delayedCall(2000, () => {
+                if (errorText && errorText.active) {
+                    this.tweens.add({
+                        targets: errorText,
+                        alpha: 0,
+                        duration: 300,
+                        onComplete: () => errorText.destroy()
                     });
                 }
             });
-        } else {
-            // Ad failed, re-enable button
+
+            // Re-enable button
             button.setAlpha(1);
             button.setInteractive(true);
-            console.log('❌ Rewarded ad failed');
         }
     }
 
