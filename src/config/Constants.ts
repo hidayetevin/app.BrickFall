@@ -32,7 +32,7 @@ export const INITIAL_LIVES = 3;
 export const MAX_LIVES = 5;
 
 // Power-ups
-export const POWER_UP_DROP_CHANCE = 0.15;
+export const POWER_UP_DROP_CHANCE = 0.10; // 10% chance per brick destroyed (was 0.15)
 export const POWER_UP_FALL_SPEED = 100;
 export const POWER_UP_DURATION = 10000; // 10 seconds
 export const POWER_UP_EXTEND_MULTIPLIER = 1.3;

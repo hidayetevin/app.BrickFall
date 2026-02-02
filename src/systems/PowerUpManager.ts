@@ -56,15 +56,16 @@ export class PowerUpManager {
 
     /**
      * Get random power-up type with weighted probabilities
+     * Total weights = 1.00 (100%)
      */
     private getRandomPowerUpType(): PowerUpType {
         const weights = {
-            [PowerUpType.MULTI_BALL]: 0.15,
-            [PowerUpType.EXTEND_PADDLE]: 0.25,
-            [PowerUpType.SLOW_BALL]: 0.20,
-            [PowerUpType.FAST_BALL]: 0.10,
-            [PowerUpType.STICKY_PADDLE]: 0.15,
-            [PowerUpType.EXTRA_LIFE]: 0.15,
+            [PowerUpType.MULTI_BALL]: 0.15,      // 15% - Same
+            [PowerUpType.EXTEND_PADDLE]: 0.35,   // 35% - Most common (was 0.25)
+            [PowerUpType.SLOW_BALL]: 0.20,       // 20% - Same
+            [PowerUpType.FAST_BALL]: 0.15,       // 15% - Increased (was 0.10)
+            [PowerUpType.STICKY_PADDLE]: 0.10,   // 10% - Reduced (was 0.15)
+            [PowerUpType.EXTRA_LIFE]: 0.05,      // 5% - RARE! (was 0.15)
         };
 
         const total = Object.values(weights).reduce((sum, weight) => sum + weight, 0);
