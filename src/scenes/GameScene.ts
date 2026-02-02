@@ -526,7 +526,8 @@ export class GameScene extends Phaser.Scene {
         mBtnBg.on('pointerdown', async () => {
             mBtnBg.disableInteractive();
             await this.adMob.showInterstitial();
-            // Go to menu
+            // Stop current scene and go to menu
+            this.scene.stop();
             this.scene.start('Menu');
         });
     }
