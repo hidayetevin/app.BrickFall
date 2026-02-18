@@ -80,8 +80,9 @@ export class MenuScene extends Phaser.Scene {
                 fontStyle: 'bold'
             });
 
-            // Show banner ad
-            this.adMob.showBanner();
+            // Show Native Ad at bottom instead of banner
+            const adHeight = 150; // Customize height for native ad
+            this.adMob.showNativeAd(height - adHeight, 0, width, adHeight);
         } catch (e) {
             console.error('❌ MenuScene create error:', e);
         }
@@ -89,8 +90,8 @@ export class MenuScene extends Phaser.Scene {
 
     shutdown(): void {
         try {
-            // Remove banner when leaving menu
-            this.adMob.removeBanner();
+            // Remove Native Ad when leaving menu
+            this.adMob.hideNativeAd();
         } catch (e) {
             console.error('❌ MenuScene shutdown error:', e);
         }

@@ -1,6 +1,6 @@
 import { AdMob, BannerAdOptions, BannerAdSize, BannerAdPosition, RewardAdPluginEvents, InterstitialAdPluginEvents, AdMobRewardItem } from '@capacitor-community/admob';
 import { Capacitor } from '@capacitor/core';
-import { getBannerAdId, getInterstitialAdId, getRewardedAdId, USE_TEST_ADS } from '@config/AdConfig';
+import { getBannerAdId, getInterstitialAdId, getRewardedAdId, getNativeAdId, USE_TEST_ADS } from '@config/AdConfig';
 
 /**
  * AdMobManager - Centralized AdMob ad management
@@ -13,7 +13,9 @@ export class AdMobManager {
     private lastInterstitialTime: number = 0;
     private readonly INTERSTITIAL_COOLDOWN = 30000; // 30 seconds
     private interstitialReady: boolean = false;
+
     private rewardedReady: boolean = false;
+    private isNativeAdShowing: boolean = false;
 
     private constructor() {
         // Listen for ad dismissal to fix layout issues
@@ -294,6 +296,70 @@ export class AdMobManager {
             console.log('📊 Banner ad removed');
         } catch (error) {
             console.error('Remove banner error:', error);
+        }
+    }
+
+
+    /**
+     * Show Native Ad (Advanced)
+     * Note: Positioning is relative to the webview
+     */
+    public async showNativeAd(top: number, left: number, width: number, height: number): Promise<void> {
+        if (!this.isInitialized || this.isNativeAdShowing) return;
+
+        try {
+            // Using generic AdOptions as NativeAdOptions might not be exported directly in all versions
+            // or follows a specific structure. Checking documentation would be best, but assuming standard AdOptions + adId
+            const options: any = {
+                adId: getNativeAdId(),
+                isTesting: USE_TEST_ADS,
+                // Layout options are crucial for Native Ads
+                adSize: {
+                    width: width,
+                    height: height
+                },
+                position: {
+                    x: left,
+                    y: top
+                },
+                // margin is sometimes used instead of x/y
+                margin: top
+            };
+
+            // Note: The specific API method for Native Advanced might differ slightly based on plugin version.
+            // Some versions use 'showNative' others might not support it directly without custom implementation.
+            // Attempting standard call. If this fails, we might need to check plugin specific docs.
+            // @ts-ignore - Ignoring potentially missing definition in current types
+            if (AdMob.showNative) {
+                // @ts-ignore
+                await AdMob.showNative(options);
+                this.isNativeAdShowing = true;
+                console.log('🖼️ Native ad shown');
+            } else {
+                console.warn('⚠️ Native ads not supported by this plugin version or method missing');
+            }
+
+        } catch (error) {
+            console.error('Show native ad error:', error);
+        }
+    }
+
+    /**
+     * Hide Native Ad
+     */
+    public async hideNativeAd(): Promise<void> {
+        if (!this.isNativeAdShowing) return;
+
+        try {
+            // @ts-ignore
+            if (AdMob.hideNative) {
+                // @ts-ignore
+                await AdMob.hideNative();
+                this.isNativeAdShowing = false;
+                console.log('🖼️ Native ad hidden');
+            }
+        } catch (error) {
+            console.error('Hide native ad error:', error);
         }
     }
 }

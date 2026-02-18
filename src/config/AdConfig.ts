@@ -49,3 +49,13 @@ export function getInterstitialAdId(): string {
 export function getRewardedAdId(): string {
     return USE_TEST_ADS ? REWARDED_AD_ID.TEST : REWARDED_AD_ID.ANDROID;
 }
+
+// Native Ad IDs
+export const NATIVE_AD_ID = {
+    TEST: 'ca-app-pub-3940256099942544/2247696110', // Test Native Advanced
+    ANDROID: 'ca-app-pub-4190858087915294/7185668793', // Replace with actual ID
+};
+
+export function getNativeAdId(): string {
+    return USE_TEST_ADS ? NATIVE_AD_ID.TEST : NATIVE_AD_ID.ANDROID;
+}
