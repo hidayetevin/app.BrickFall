@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { LocalizationService } from '../services/LocalizationService';
+import { StorageManager } from '../systems/StorageManager';
 
 /**
  * BootScene - Initial loading and asset preloading scene
@@ -23,6 +25,9 @@ export class BootScene extends Phaser.Scene {
             fontSize: '20px',
             color: '#ffffff',
         });
+
+        // Dynamic loading of locale files is ideal, but for now we bundled them.
+        // Once this scene creates, we can set the true language.
         loadingText.setOrigin(0.5, 0.5);
 
         // Percent text
@@ -69,16 +74,22 @@ export class BootScene extends Phaser.Scene {
     create(): void {
         console.log('✅ BootScene: Assets loaded successfully');
 
+        // Init language from storage
+        const storage = StorageManager.getInstance();
+        const i18n = LocalizationService.getInstance();
+        const lang = storage.getSettings().language || 'en';
+        i18n.setLanguage(lang);
+
         // Show temporary message
         const { width, height } = this.cameras.main;
 
-        this.add.text(width / 2, height / 2 - 50, '🎮 BRICK FALL', {
+        this.add.text(width / 2, height / 2 - 50, i18n.get('BOOT.READY_TITLE'), {
             fontSize: '32px',
             color: '#ffffff',
             fontStyle: 'bold',
         }).setOrigin(0.5);
 
-        this.add.text(width / 2, height / 2 + 20, 'Ready to break!', {
+        this.add.text(width / 2, height / 2 + 20, i18n.get('BOOT.READY_SUBTITLE'), {
             fontSize: '20px',
             color: '#00ff88',
         }).setOrigin(0.5);

@@ -34,12 +34,8 @@ export class GameScene extends Phaser.Scene {
     private lastHitTime: number = 0;
 
     // Aiming
-    private aimLine!: Phaser.GameObjects.Graphics;
     private isAiming: boolean = false;
     private currentAimAngle: number = -90; // Default straight up
-
-    private scoreText!: Phaser.GameObjects.Text;
-    private livesText!: Phaser.GameObjects.Text;
 
     constructor() {
         super({ key: 'Game' });
@@ -77,10 +73,9 @@ export class GameScene extends Phaser.Scene {
         this.brickManager = new BrickManager(this);
         this.brickManager.createBricksFromLevel(this.levelConfig);
 
-        this.powerUpManager = new PowerUpManager(this, this.paddle, this.balls);
-
-        // Setup UI
-        this.setupUI();
+        // Setup Events and UI bridge
+        this.setupUIEvents();
+        this.scene.launch('GameUI'); // Start the UI scene in parallel
 
         // Setup Event Listeners
         this.setupEvents();
@@ -92,6 +87,92 @@ export class GameScene extends Phaser.Scene {
         this.setupTiltControl();
 
         this.gameState = 'IDLE';
+    }
+
+    private setupUIEvents(): void {
+        this.events.on('uiReady', () => {
+            this.updateUI();
+            this.events.emit('showLaunchText', this.gameState === 'IDLE');
+        });
+
+        this.events.on('requestPause', () => {
+            if (this.gameState === 'PLAYING' || this.gameState === 'IDLE') {
+                this.pauseGame();
+            }
+        });
+
+        this.events.on('requestResume', () => {
+            if (this.gameState === 'PAUSED') {
+                // The UI scene handles ad showing (or we handle it here if requested)
+                this.adMob.showInterstitial().then(() => {
+                    this.matter.world.resume();
+                    this.gameState = 'IDLE'; // Or restore previous state
+                });
+            }
+        });
+
+        this.events.on('requestRetry', () => {
+            this.adMob.showInterstitial().then(() => {
+                this.scene.stop('GameUI');
+                this.scene.restart({ levelId: this.levelConfig.id });
+            });
+        });
+
+        this.events.on('requestMainMenu', () => {
+            this.adMob.showInterstitial().then(() => {
+                this.scene.stop('GameUI');
+                this.scene.stop();
+                this.scene.start('Menu');
+            });
+        });
+
+        this.events.on('requestGameOver', () => {
+            this.handleGameOver();
+        });
+
+        this.events.on('requestAdContinue', async () => {
+            const rewarded = await this.adMob.showRewarded();
+            if (rewarded) {
+                this.lives = 1;
+                this.updateUI();
+                this.gameState = 'IDLE';
+                this.setupBall();
+                this.events.emit('adContinueSuccess');
+                this.events.emit('showLaunchText', true);
+            } else {
+                this.events.emit('adContinueFailed');
+            }
+        });
+
+        // Input for aiming (still handled here, but graphics are in UI)
+        this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+            // Check if clicking near top (pause button area approx)
+            if (pointer.y < 100 && pointer.x < 100) return;
+
+            if (this.gameState === 'IDLE') {
+                this.isAiming = true;
+                this.currentAimAngle = -90;
+                this.events.emit('showLaunchText', false);
+                this.updateAimAngle(pointer);
+            }
+        });
+
+        this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+            if (this.isAiming && this.gameState === 'IDLE') {
+                this.updateAimAngle(pointer);
+            }
+        });
+
+        this.input.on('pointerup', () => {
+            if (this.isAiming && this.gameState === 'IDLE') {
+                this.isAiming = false;
+                this.events.emit('clearAimLine');
+                this.gameState = 'PLAYING';
+                if (this.balls[0]) {
+                    this.balls[0].launch(this.currentAimAngle);
+                }
+            }
+        });
     }
 
     private setupTiltControl(): void {
@@ -133,72 +214,6 @@ export class GameScene extends Phaser.Scene {
         ball.setSpeed(this.levelConfig.ballSpeed);
         this.balls.push(ball);
         ball.attachToPaddle(this.paddle.x, this.paddle.y);
-    }
-
-    private setupUI(): void {
-        const { width, height } = this.cameras.main;
-
-        this.scoreText = this.add.text(20, 20, `SCORE: ${this.score}`, {
-            fontSize: '20px',
-            color: '#ffffff',
-            fontStyle: 'bold'
-        });
-
-        this.livesText = this.add.text(width - 20, 20, `LIVES: ${this.lives}`, {
-            fontSize: '20px',
-            color: '#ff4444',
-            fontStyle: 'bold'
-        }).setOrigin(1, 0);
-
-
-        const launchText = this.add.text(width / 2, height / 2 + 100, 'Tap to Launch', {
-            fontSize: '24px',
-            color: '#aaaaaa'
-        }).setOrigin(0.5);
-
-        this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-            // Check if clicking UI elements (pause button, etc)
-            if (pointer.y < 100 && pointer.x < 100) return;
-
-            if (this.gameState === 'IDLE') {
-                this.isAiming = true;
-                this.currentAimAngle = -90;
-                launchText.setVisible(false);
-                this.updateAimLine(pointer);
-            }
-        });
-
-        this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
-            if (this.isAiming && this.gameState === 'IDLE') {
-                this.updateAimLine(pointer);
-            }
-        });
-
-        this.input.on('pointerup', () => {
-            if (this.isAiming && this.gameState === 'IDLE') {
-                this.isAiming = false;
-                this.aimLine.clear();
-                this.gameState = 'PLAYING';
-                this.balls[0].launch(this.currentAimAngle);
-            }
-        });
-
-        // Initialize aim graphics
-        this.aimLine = this.add.graphics();
-        this.aimLine.setDepth(10);
-
-        // Pause Button
-        const pauseBtn = this.add.text(20, 50, '⏸️', {
-            fontSize: '32px'
-        })
-            .setInteractive({ useHandCursor: true })
-            .setDepth(100);
-
-        pauseBtn.on('pointerdown', () => {
-            if (this.gameState === 'PLAYING' || this.gameState === 'IDLE') {
-                this.pauseGame();
-            }
-        });
     }
 
     private setupEvents(): void {
@@ -309,16 +324,9 @@ export class GameScene extends Phaser.Scene {
     }
 
     private updateUI(): void {
-        // Only update if scene is still active and text objects exist
-        if (!this.scene || !this.scoreText || !this.livesText) return;
-        if (!this.scoreText.scene || !this.livesText.scene) return;
-
-        try {
-            this.scoreText.setText(`SCORE: ${this.score}`);
-            this.livesText.setText(`LIVES: ${this.lives}`);
-        } catch (e) {
-            // Scene may be transitioning, ignore render errors
-        }
+        // Emit events to GameUIScene
+        this.events.emit('updateScore', this.score);
+        this.events.emit('updateLives', this.lives);
     }
 
     update(): void {
@@ -375,80 +383,7 @@ export class GameScene extends Phaser.Scene {
 
     private showContinueOption(): void {
         this.gameState = 'GAME_OVER';
-        const { width, height } = this.cameras.main;
-
-        // Dark overlay
-        const overlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.8).setOrigin(0).setDepth(1000);
-
-        // Game Over text
-        const gameOverText = this.add.text(width / 2, height * 0.3, 'GAME OVER', {
-            fontSize: '32px',
-            color: '#ff4444',
-            fontStyle: 'bold'
-        }).setOrigin(0.5).setDepth(1001);
-
-        // Continue button (ALWAYS show, even if not ready)
-        const continueBtn = this.add.rectangle(width / 2, height * 0.5, 240, 60, 0x00aa00)
-            .setOrigin(0.5)
-            .setDepth(1001)
-            .setInteractive({ useHandCursor: true });
-
-        const continueBtnText = this.add.text(width / 2, height * 0.5,
-            this.adMob.isRewardedReady() ? '🎁 WATCH AD\nFOR EXTRA LIFE' : '⏳ LOADING AD...', {
-            fontSize: '16px',
-            color: '#ffffff',
-            fontStyle: 'bold',
-            align: 'center'
-        }).setOrigin(0.5).setDepth(1002);
-
-        continueBtn.on('pointerdown', async () => {
-            // Disable button during ad
-            continueBtn.disableInteractive();
-            continueBtnText.setText('⏳ LOADING...');
-
-            const rewarded = await this.adMob.showRewarded();
-            if (rewarded) {
-                // Grant extra life
-                this.lives = 1;
-                this.updateUI();
-                this.gameState = 'IDLE';
-                overlay.destroy();
-                gameOverText.destroy();
-                continueBtn.destroy();
-                continueBtnText.destroy();
-                gameOverBtn.destroy();
-                gameOverBtnText.destroy();
-                this.setupBall();
-                console.log('✅ Extra life granted!');
-            } else {
-                // Ad failed or not ready
-                continueBtnText.setText('❌ AD NOT READY\nTRY AGAIN');
-                continueBtn.setInteractive({ useHandCursor: true });
-
-                // Auto-retry after 2 seconds
-                this.time.delayedCall(2000, () => {
-                    if (this.adMob.isRewardedReady()) {
-                        continueBtnText.setText('🎁 WATCH AD\nFOR EXTRA LIFE');
-                    }
-                });
-            }
-        });
-
-        // Game Over button
-        const gameOverBtn = this.add.rectangle(width / 2, height * 0.65, 240, 60, 0xaa0000)
-            .setOrigin(0.5)
-            .setDepth(1001)
-            .setInteractive({ useHandCursor: true });
-
-        const gameOverBtnText = this.add.text(width / 2, height * 0.65, 'GIVE UP', {
-            fontSize: '18px',
-            color: '#ffffff',
-            fontStyle: 'bold'
-        }).setOrigin(0.5).setDepth(1002);
-
-        gameOverBtn.on('pointerdown', () => {
-            this.handleGameOver();
-        });
+        this.events.emit('showContinueOption', this.adMob.isRewardedReady());
     }
 
     private handleLevelWin(): void {
@@ -474,131 +409,28 @@ export class GameScene extends Phaser.Scene {
     }
 
     private handleGameOver(): void {
-        // Prevent any further events from being processed
         this.gameState = 'GAME_OVER';
+        this.scene.stop('GameUI');
 
-        // Small delay before transition to allow cleanup
         this.time.delayedCall(100, () => {
             this.scene.start('GameOver', { levelId: this.levelConfig.id, score: this.score });
         });
     }
 
     private pauseGame(): void {
-        const previousState = this.gameState;
         this.gameState = 'PAUSED';
         this.matter.world.pause();
-
-        const { width, height } = this.cameras.main;
-
-        // Overlay
-        const overlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.7)
-            .setOrigin(0)
-            .setDepth(2000)
-            .setInteractive(); // Block clicks
-
-        // Popup Container
-        const container = this.add.container(width / 2, height / 2).setDepth(2001);
-
-        // Popup Background
-        const bg = this.add.rectangle(0, 0, 300, 350, 0x1a1a2e)
-            .setStrokeStyle(2, 0x0f3460);
-        container.add(bg);
-
-        // Title
-        const title = this.add.text(0, -140, 'PAUSED', {
-            fontSize: '32px',
-            color: '#ffffff',
-            fontStyle: 'bold'
-        }).setOrigin(0.5);
-        container.add(title);
-
-        // Continue Button
-        const continueBtn = this.add.container(0, -50);
-        const cBtnBg = this.add.rectangle(0, 0, 240, 60, 0x00aa00)
-            .setInteractive({ useHandCursor: true });
-        const cBtnText = this.add.text(0, 0, 'CONTINUE', {
-            fontSize: '24px', fontStyle: 'bold', color: '#ffffff'
-        }).setOrigin(0.5);
-        continueBtn.add([cBtnBg, cBtnText]);
-        container.add(continueBtn);
-
-        cBtnBg.on('pointerdown', async () => {
-            // Disable input just in case
-            cBtnBg.disableInteractive();
-
-            // Show Interstitial Ad then resume
-            await this.adMob.showInterstitial();
-
-            // Cleanup and resume
-            container.destroy();
-            overlay.destroy();
-            this.matter.world.resume();
-            this.gameState = previousState;
-        });
-
-
-        // Retry Button
-        const retryBtn = this.add.container(0, 30);
-        const rBtnBg = this.add.rectangle(0, 0, 240, 60, 0x0f3460)
-            .setInteractive({ useHandCursor: true });
-        const rBtnText = this.add.text(0, 0, 'RETRY', {
-            fontSize: '24px', fontStyle: 'bold', color: '#ffffff'
-        }).setOrigin(0.5);
-        retryBtn.add([rBtnBg, rBtnText]);
-        container.add(retryBtn);
-
-        rBtnBg.on('pointerdown', async () => {
-            rBtnBg.disableInteractive();
-            await this.adMob.showInterstitial();
-            // Restart level
-            this.scene.restart({ levelId: this.levelConfig.id });
-        });
-
-        // Main Menu Button
-        const menuBtn = this.add.container(0, 110);
-        const mBtnBg = this.add.rectangle(0, 0, 240, 60, 0xaa0000)
-            .setInteractive({ useHandCursor: true });
-        const mBtnText = this.add.text(0, 0, 'MAIN MENU', {
-            fontSize: '24px', fontStyle: 'bold', color: '#ffffff'
-        }).setOrigin(0.5);
-        menuBtn.add([mBtnBg, mBtnText]);
-        container.add(menuBtn);
-
-        mBtnBg.on('pointerdown', async () => {
-            mBtnBg.disableInteractive();
-            await this.adMob.showInterstitial();
-            // Stop current scene and go to menu
-            this.scene.stop();
-            this.scene.start('Menu');
-        });
+        this.events.emit('showPauseMenu');
     }
 
-    private updateAimLine(pointer: Phaser.Input.Pointer): void {
+    private updateAimAngle(pointer: Phaser.Input.Pointer): void {
         if (!this.balls[0]) return;
         const ball = this.balls[0];
 
-        // Calculate angle between ball and pointer
         let angle = Phaser.Math.Angle.Between(ball.x, ball.y, pointer.x, pointer.y);
         let degrees = Phaser.Math.RadToDeg(angle);
 
-        // Logic to make aiming intuitive:
-        // - Dragging UP should aim UP
-        // - Phaser 0 is RIGHT, -90 is UP, 180/-180 is LEFT, 90 is DOWN
-
-        // If user is dragging BELOW the ball (y > ball.y), they probably mean to aim in that direction
-        // but inverted? Assuming "pull back to aim" mechanism is NOT requested, but rather "drag to point".
-        // The user said: "Oyuncu parmağını kaydırarak yönü değiştirebilecek" -> "Player can change direction by sliding finger"
-        // And "Çıkış noktası topun merkezi olacak" -> "Origin is ball center"
-
-        // So pointer is the target direction.
-
-        // Clamp angle to valid range (-165 to -15 degrees)
-        // Vertical is -90. Allow +/- 75 degrees.
-        // Range: -165 (left limit) <-> -15 (right limit)
-
-        // If the pointer is below the paddle, we should probably ignore or clamp drastically
         if (pointer.y > ball.y) {
-            // If below, clamp to nearest horizontal
             if (pointer.x < ball.x) degrees = -165;
             else degrees = -15;
         } else {
@@ -606,19 +438,6 @@ export class GameScene extends Phaser.Scene {
         }
 
         this.currentAimAngle = degrees;
-
-        // Draw line
-        this.aimLine.clear();
-        this.aimLine.lineStyle(4, 0xffffff, 0.5); // Semi-visible white line
-
-        const lineLength = 150;
-        const rads = Phaser.Math.DegToRad(degrees);
-        const endX = ball.x + Math.cos(rads) * lineLength;
-        const endY = ball.y + Math.sin(rads) * lineLength;
-
-        this.aimLine.beginPath();
-        this.aimLine.moveTo(ball.x, ball.y);
-        this.aimLine.lineTo(endX, endY);
-        this.aimLine.strokePath();
+        this.events.emit('drawAimLine', ball.x, ball.y, degrees);
     }
 }

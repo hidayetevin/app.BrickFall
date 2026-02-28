@@ -3,6 +3,7 @@ import { Button } from '@ui/Button';
 import { LevelManager } from '@systems/LevelManager';
 import { StorageManager } from '@systems/StorageManager';
 import { AdMobManager } from '../services/AdMobManager';
+import { LocalizationService } from '../services/LocalizationService';
 import { WORLDS } from '@config/LevelData';
 import { COLORS } from '@config/Constants';
 
@@ -41,9 +42,10 @@ export class WorldMapScene extends Phaser.Scene {
 
         // Add a bottom line for the header
         const headerLine = this.add.rectangle(0, headerH - 2, width, 2, 0x00d2ff).setOrigin(0);
+        const i18n = LocalizationService.getInstance();
 
         const titleFontSize = isSmallScreen ? '18px' : '24px';
-        const title = this.add.text(width / 2 + 20, headerH / 2, 'LEVEL SELECTION', {
+        const title = this.add.text(width / 2 + 20, headerH / 2, i18n.get('WORLD_MAP.TITLE'), {
             fontSize: titleFontSize,
             color: '#00d2ff',
             fontStyle: '900',
@@ -104,7 +106,8 @@ export class WorldMapScene extends Phaser.Scene {
 
             // Unlock requirement if locked
             if (!isUnlocked) {
-                const lockInfo = this.add.text(width / 2, currentY, `🔒 REACH ${world.unlockStars} STARS TO UNLOCK`, {
+                const lockText = i18n.get('WORLD_MAP.WORLD_LOCKED', world.unlockStars);
+                const lockInfo = this.add.text(width / 2, currentY, `🔒 ${lockText}`, {
                     fontSize: isSmallScreen ? '10px' : '12px',
                     color: '#ff4444',
                     fontStyle: 'bold'

@@ -1,0 +1,55 @@
+{
+    "MENU": {
+        "TITLE_BRICK": "BRICK",
+        "TITLE_FALL": "FALL",
+        "PLAY": "PLAY",
+        "CONTINUE": "CONTINUE",
+        "SETTINGS": "SETTINGS",
+        "VERSION": "v1.0.0 | 2026"
+    },
+    "SETTINGS": {
+        "TITLE": "SETTINGS",
+        "SOUND": "SOUND",
+        "HAPTICS": "HAPTICS",
+        "TILT_CONTROL": "TILT CONTROL",
+        "SENSITIVITY": "SENSITIVITY",
+        "RESET_ALL_PROGRESS": "RESET ALL PROGRESS",
+        "RESET_CONFIRM": "Are you sure you want to reset all progress?",
+        "ON": "ON",
+        "OFF": "OFF",
+        "BACK": "BACK"
+    },
+    "GAME": {
+        "SCORE": "SCORE",
+        "LIVES": "LIVES",
+        "TAP_TO_LAUNCH": "Tap to Launch",
+        "PAUSED_TITLE": "PAUSED",
+        "CONTINUE": "CONTINUE",
+        "RETRY": "RETRY",
+        "MAIN_MENU": "MAIN MENU",
+        "GAME_OVER_TITLE": "GAME OVER",
+        "WATCH_AD_EXTRA_LIFE": "🎁 WATCH AD\\nFOR EXTRA LIFE",
+        "LOADING_AD": "⏳ LOADING AD...",
+        "LOADING": "⏳ LOADING...",
+        "AD_NOT_READY": "❌ AD NOT READY\\nTRY AGAIN",
+        "GIVE_UP": "GIVE UP",
+        "LEVEL_COMPLETE_TITLE": "LEVEL COMPLETE",
+        "NEW_HIGH_SCORE": "NEW HIGH SCORE!",
+        "STAT_BRICKS": "Bricks Destroyed:",
+        "STAT_LIVES": "Lives Remaining:",
+        "STAT_POWERUPS": "Power-ups Used:",
+        "NEXT_LEVEL": "NEXT LEVEL",
+        "YOU_WIN": "YOU WIN!",
+        "CONGRATULATIONS": "Congratulations! You completed all levels."
+    },
+    "WORLD_MAP": {
+        "TITLE": "WORLD MAP",
+        "BACK": "BACK",
+        "WORLD_LOCKED": "Unlock at ⭐{0}"
+    },
+    "BOOT": {
+        "LOADING": "Loading...",
+        "READY_TITLE": "🎮 BRICK FALL",
+        "READY_SUBTITLE": "Ready to break!"
+    }
+}

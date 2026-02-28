@@ -22,6 +22,7 @@ export interface Settings {
     particlesEnabled: boolean;
     tiltControlEnabled: boolean; // Device tilting control
     sensitivity: number; // 1 to 10 scale
+    language?: 'en' | 'tr'; // Game language
 }
 
 /**

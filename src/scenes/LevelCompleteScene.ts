@@ -3,6 +3,7 @@ import { Button } from '@ui/Button';
 import { LevelManager } from '@systems/LevelManager';
 import { StorageManager } from '@systems/StorageManager';
 import { AdMobManager } from '../services/AdMobManager';
+import { LocalizationService } from '../services/LocalizationService';
 import { COLORS } from '@config/Constants';
 
 /**
@@ -25,20 +26,21 @@ export class LevelCompleteScene extends Phaser.Scene {
         try {
             const { width, height } = this.cameras.main;
             const isSmallScreen = width < 400;
+            const i18n = LocalizationService.getInstance();
 
             // Background overlay
             this.add.rectangle(0, 0, width, height, 0x000000, 0.8).setOrigin(0);
 
             // Victory text
             const titleFontSize = isSmallScreen ? '28px' : '36px';
-            this.add.text(width / 2, height * 0.2, 'LEVEL COMPLETE!', {
+            this.add.text(width / 2, height * 0.2, i18n.get('GAME.LEVEL_COMPLETE_TITLE'), {
                 fontSize: titleFontSize,
                 color: '#00ff88',
                 fontStyle: 'bold'
             }).setOrigin(0.5);
 
             // Score
-            this.add.text(width / 2, height * 0.3, `SCORE: ${data.score}`, {
+            this.add.text(width / 2, height * 0.3, `${i18n.get('GAME.SCORE')}: ${data.score}`, {
                 fontSize: isSmallScreen ? '20px' : '24px',
                 color: '#ffffff'
             }).setOrigin(0.5);
@@ -89,17 +91,17 @@ export class LevelCompleteScene extends Phaser.Scene {
             const btnH = isSmallScreen ? 55 : 60;
 
             // Other buttons (needed for handleDoubleReward)
-            const nextBtn = new Button(this, width / 2, height * 0.68, 'NEXT LEVEL', btnW, btnH, COLORS.UI_PRIMARY, () => {
+            const nextBtn = new Button(this, width / 2, height * 0.68, i18n.get('GAME.NEXT_LEVEL'), btnW, btnH, COLORS.UI_PRIMARY, () => {
                 try { this.goToNextLevel(data.levelId); } catch (e) { }
             });
             nextBtn.setAlpha(0);
 
-            const selectBtn = new Button(this, width / 2, height * 0.78, 'LEVEL SELECT', btnW, btnH, COLORS.UI_SECONDARY, () => {
+            const selectBtn = new Button(this, width / 2, height * 0.78, i18n.get('WORLD_MAP.TITLE'), btnW, btnH, COLORS.UI_SECONDARY, () => {
                 try { this.scene.start('WorldMap'); } catch (e) { }
             });
             selectBtn.setAlpha(0);
 
-            const menuBtn = new Button(this, width / 2, height * 0.88, 'MAIN MENU', btnW, btnH, COLORS.UI_SECONDARY, () => {
+            const menuBtn = new Button(this, width / 2, height * 0.88, i18n.get('GAME.MAIN_MENU'), btnW, btnH, COLORS.UI_SECONDARY, () => {
                 try { this.scene.start('Menu'); } catch (e) { }
             });
             menuBtn.setAlpha(0);
@@ -151,7 +153,8 @@ export class LevelCompleteScene extends Phaser.Scene {
 
         // Show loading indicator
         const { width, height } = this.cameras.main;
-        const loadingText = this.add.text(width / 2, height * 0.52, 'Loading ad...', {
+        const i18n = LocalizationService.getInstance();
+        const loadingText = this.add.text(width / 2, height * 0.52, i18n.get('GAME.LOADING_AD'), {
             fontSize: '18px',
             color: '#ffaa00',
             fontStyle: 'bold'

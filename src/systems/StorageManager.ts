@@ -42,6 +42,7 @@ export class StorageManager {
                 particlesEnabled: true,
                 tiltControlEnabled: false,
                 sensitivity: 5,
+                language: 'en',
             },
         };
     }

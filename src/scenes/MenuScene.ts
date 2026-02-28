@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { Button } from '@ui/Button';
 import { StorageManager } from '@systems/StorageManager';
 import { AdMobManager } from '../services/AdMobManager';
+import { LocalizationService } from '../services/LocalizationService';
 import { COLORS } from '@config/Constants';
 
 /**
@@ -20,6 +21,7 @@ export class MenuScene extends Phaser.Scene {
     create(): void {
         try {
             const { width, height } = this.cameras.main;
+            const i18n = LocalizationService.getInstance();
 
             // Background
             this.add.rectangle(0, 0, width, height, COLORS.BACKGROUND).setOrigin(0);
@@ -27,7 +29,8 @@ export class MenuScene extends Phaser.Scene {
             // Title
             const isSmallScreen = width < 400;
             const titleFontSize = isSmallScreen ? '48px' : '64px';
-            const title = this.add.text(width / 2, height * 0.25, 'BRICK\nFALL', {
+            const titleString = `${i18n.get('MENU.TITLE_BRICK')}\n${i18n.get('MENU.TITLE_FALL')}`;
+            const title = this.add.text(width / 2, height * 0.25, titleString, {
                 fontSize: titleFontSize,
                 color: '#ffffff',
                 fontStyle: 'bold',
@@ -49,25 +52,25 @@ export class MenuScene extends Phaser.Scene {
             const btnW = Math.min(width * 0.7, 240);
             const btnH = 60;
 
-            new Button(this, width / 2, height * 0.5, 'PLAY', btnW, btnH, COLORS.UI_PRIMARY, () => {
+            new Button(this, width / 2, height * 0.5, i18n.get('MENU.PLAY'), btnW, btnH, COLORS.UI_PRIMARY, () => {
                 try { this.scene.start('WorldMap'); } catch (e) { }
             });
 
             // If progress exists, show continue
             const currentLevel = this.storage.getCurrentLevel();
             if (currentLevel > 1) {
-                new Button(this, width / 2, height * 0.6, 'CONTINUE', btnW, btnH, COLORS.UI_SECONDARY, () => {
+                new Button(this, width / 2, height * 0.6, i18n.get('MENU.CONTINUE'), btnW, btnH, COLORS.UI_SECONDARY, () => {
                     try { this.scene.start('Game', { levelId: currentLevel }); } catch (e) { }
                 });
             }
 
             // Settings button
-            new Button(this, width / 2, height * 0.7, 'SETTINGS', btnW, btnH, COLORS.UI_SECONDARY, () => {
+            new Button(this, width / 2, height * 0.7, i18n.get('MENU.SETTINGS'), btnW, btnH, COLORS.UI_SECONDARY, () => {
                 try { this.scene.start('Settings'); } catch (e) { }
             });
 
             // Version/Credit
-            this.add.text(width / 2, height - 30, 'v1.0.0 | 2026', {
+            this.add.text(width / 2, height - 30, i18n.get('MENU.VERSION'), {
                 fontSize: '12px',
                 color: '#666666'
             }).setOrigin(0.5);

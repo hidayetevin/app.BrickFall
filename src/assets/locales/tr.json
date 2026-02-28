@@ -1,0 +1,55 @@
+{
+    "MENU": {
+        "TITLE_BRICK": "TUĞLA",
+        "TITLE_FALL": "DÜŞÜŞÜ",
+        "PLAY": "OYNA",
+        "CONTINUE": "DEVAM ET",
+        "SETTINGS": "AYARLAR",
+        "VERSION": "v1.0.0 | 2026"
+    },
+    "SETTINGS": {
+        "TITLE": "AYARLAR",
+        "SOUND": "SES",
+        "HAPTICS": "TİTREŞİM",
+        "TILT_CONTROL": "EĞİM KONTROLÜ",
+        "SENSITIVITY": "HASSASİYET",
+        "RESET_ALL_PROGRESS": "TÜM İLERLEMEYİ SIFIRLA",
+        "RESET_CONFIRM": "Tüm ilerlemeyi sıfırlamak istediğinize emin misiniz?",
+        "ON": "AÇIK",
+        "OFF": "KAPALI",
+        "BACK": "GERİ"
+    },
+    "GAME": {
+        "SCORE": "SKOR",
+        "LIVES": "CAN",
+        "TAP_TO_LAUNCH": "Fırlatmak için Dokun",
+        "PAUSED_TITLE": "DURAKLATILDI",
+        "CONTINUE": "DEVAM ET",
+        "RETRY": "TEKRAR DENE",
+        "MAIN_MENU": "ANA MENÜ",
+        "GAME_OVER_TITLE": "OYUN BİTTİ",
+        "WATCH_AD_EXTRA_LIFE": "🎁 EKSTRA CAN İÇİN\\nREKLAM İZLE",
+        "LOADING_AD": "⏳ REKLAM YÜKLENİYOR...",
+        "LOADING": "⏳ YÜKLENİYOR...",
+        "AD_NOT_READY": "❌ REKLAM HAZIR DEĞİL\\nTEKRAR DENEYİN",
+        "GIVE_UP": "PES ET",
+        "LEVEL_COMPLETE_TITLE": "SEVİYE TAMAMLANDI",
+        "NEW_HIGH_SCORE": "YENİ REKOR!",
+        "STAT_BRICKS": "Kırılan Tuğla:",
+        "STAT_LIVES": "Kalan Can:",
+        "STAT_POWERUPS": "Kullanılan Güçlendirici:",
+        "NEXT_LEVEL": "SONRAKİ SEVİYE",
+        "YOU_WIN": "KAZANDIN!",
+        "CONGRATULATIONS": "Tebrikler! Tüm seviyeleri tamamladın."
+    },
+    "WORLD_MAP": {
+        "TITLE": "DÜNYA HARİTASI",
+        "BACK": "GERİ",
+        "WORLD_LOCKED": "⭐{0} ile açılır"
+    },
+    "BOOT": {
+        "LOADING": "Yükleniyor...",
+        "READY_TITLE": "🎮 TUĞLA DÜŞÜŞÜ",
+        "READY_SUBTITLE": "Kırmaya hazır!"
+    }
+}
